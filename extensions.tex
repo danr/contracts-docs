@@ -1,0 +1,216 @@
+\dr{I just use this section for what I am currently working on but it
+  should be spread across the article. The first subsections could be
+  merged with the previous section.}
+The language for expressing contracts in the previous section is a bit
+too weak. Here are the the new ideas:
+
+\subsection{Parameterised contracts}
+
+Motivating example:
+
+\[\begin{array}{rcl}
+@(++)@ & \in & \{ @xs@ \mid @CF@ \} \to \{ @ys@ \mid @CF@ \} \to \\
+       &     & \{ @rs@ \mid @CF@ \; \land \; @any p xs || any p ys <=> any p rs@ \}
+\end{array}\]
+
+This contract was not earlier expressible because @p@ occurs free. We
+allow \emph{parameterised} contracts, and let the user write the above
+contract as follows:
+
+\begin{code}
+any_app :: (a -> Bool) -> Statement
+any_app p = given (p ::: CF --> CF) $
+    (++) ::: CF :-> \xs -> CF :-> \ys ->
+             CF :&: Pred (\rs ->
+                any p xs || any p ys <=> any p rs)
+\end{code}
+% $
+\dr{@Using@ is a bit annoying since the lambdas in @:->@ binds over
+  them, so I used @given = flip Using@}
+
+This is sound because we could make another function behaving exactly
+like @(++)@, but with an extra argument that is @p@, that is just
+passed along every recursive call. The above construction allows us
+to avoid making such an unnatural gymnastic.
+
+\dr{Interestingly, the above contract could be written somewhat
+  similar if we had disjunction in our contracts. That makes me
+  wonder, are coproducts admissible?}
+
+We can now also express associativity properties:
+
+\begin{code}
+app_assoc :: [a] -> Statement
+app_assoc zs = (++) :::
+    CF :-> \xs -> CF :-> \ys -> CF :&: Pred
+        (\rs -> rs ++ zs == xs ++ (ys ++ zs))
+\end{code}
+
+\subsection{Partially applied contracts}
+
+Quite the opposite to parameterised contracts, we also allow
+\emph{partially applied} contracts. An example:
+$$@map fromJust@ \in \{ @xs@ \mid @all isJust xs@ \} \to @CF@$$
+
+This is now simple to express in our language:
+
+\begin{code}
+unjust = map fromJust ::: Pred (all isJust) --> CF
+\end{code}
+
+Fixed point induction will be applied to the above contract as @map@
+here has both these characteristics:
+\begin{itemize}
+   \item it is the root of the expression, and
+   \item it is a recursive function.
+\end{itemize}
+
+What if we instead had @for :: [a] -> (a -> b) -> [b]@ defined
+and we wanted to express the same contract? We surely want to
+be able to write either of these:
+
+\begin{code}
+unjust_flip = flip for fromJust
+                    ::: Pred (all isJust) --> CF
+
+unjust_lambda = \xs -> for xs fromJust
+                    ::: Pred (all isJust) --> CF
+\end{code}
+
+And, indeed, we allow both of these, and we regard @for@ as being on
+top of the expression, susceptible for induction, on both examples
+above. How? In @unjust_flip@, we inline @flip@ since it is a
+non-recursive function that does not do case distinctions. Then we end
+up with the same as in the second example, @unjust_lambda@. We strip off the leading
+lambda(s), and then the top level @for@ is readily found.
+
+\paragraph{Parameterised and partially applied contracts}
+
+When combining these two techniques, we can express contracts
+reflexivity for a concrete equivalence function:
+
+\begin{code}
+refl :: Nat -> Statement
+refl x = given (x ::: CF) $
+    x == x ::: CF :&: Pred (const True)
+\end{code}
+% $
+
+Notice that the contract is for @x == x@, i.e. for the fully applied @(==)@.
+Induction is used to prove this contract.
+
+\subsection{First order equality in contracts}
+
+The earlier example with associativity of @(++)@ was defined in terms
+of some equality function @(==)@. However, these are not very
+convenient to prove with. We have to show that they constitute an
+equivalence relation, but more serious is that we need to show that
+they form a congruence over the functions we are interested in. The
+equality in first order logic always has this property; it is
+substitutive. And indeed, some properties we show hold up to its
+equality, such as associativity:
+
+\[\begin{array}{rcl}
+\forall \{ @zs@ \} . @(++)@ & \in & \{ @xs@ \} \to \{ @ys@ \} \to \\
+                            &     & \{ @rs@ \mid @rs ++ zs@ = @xs ++ (ys ++ zs)@ \}
+\end{array}\]
+
+How can we express this in our DSL? We make a new @Eq@ constructor for @Contract@:
+
+$$@Eq :: (a -> Equality a) -> Contract a@$$,
+
+and we make a new data type Equality:
+
+\begin{code}
+data Equality a where
+    (:=:) :: a -> a -> Contract a
+\end{code}
+
+We now write the property as this:
+
+\begin{code}
+app_assoc :: [a] -> Statement
+app_assoc zs = (++) :::
+    Any :-> \xs -> Any :-> \ys -> Eq
+        (\rs -> rs ++ zs :=: xs ++ (ys ++ zs))
+\end{code}
+
+Using induction, the step case goes through, but the base case is a
+bit more problematic. We then have to prove that we have
+$\bot @++ zs@ = @xs ++ (ys ++ zs)@$ for all @xs@, @ys@ and @zs@.
+Dimitrios comes to the rescue and demands all contracts to hold in the
+base case, so we really add a bottom fall-through for equality.
+
+Formally, we extend contracts with a new construct
+\[\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Contracts}} \\
+ \Ct & ::=  & \cdots                 & \text{Previous constructs} \\
+     & \mid & \formula{\{ x \mid e_1 = e_2 \}} & \text{Equality}
+\end{array}\]
+
+Translated as follows:
+
+\[\begin{array}{l}
+\ctrans{\Sigma}{\Gamma}{e \in \{x \mid e_1 = e_2 \}}
+  = \; t{=}\unr \; \lor \; t_1[t/x]{=}t_2[t/x] \\
+\quad \text{where} \;
+   t = \etrans{\Sigma}{\Gamma}{e}, \;
+   t_1 = \etrans{\Sigma}{\Gamma}{e_1} \; \text{and} \;
+   t_2 = \etrans{\Sigma}{\Gamma}{e_2}
+\end{array}\]
+
+\paragraph{Suggested min translation of equality}
+
+\[\begin{array}{l}
+\ctrans{\Sigma}{\Gamma}{e \in \{x \mid e_1 = e_2 \}} \\
+\quad = \; \formula{( min(t_1) \lor min(t_2) )} \\ %%  \formula{min(t) \; \land \;}
+\quad => (\formula{min(t)} \; \land \; t{=}\unr) \; \lor \; t_1[t/x]{=}t_2[t/x] \\ \\
+\ctrans{\Sigma}{\Gamma}{e \notin \{x \mid e_1 = e_2 \}} \\
+\quad = \; \formula{(min(t) \; \land \; t{=}unr) \lor neq(t_1[t/x],t_2[t/x]))}
+\end{array}\]
+
+Where $neq$ is an apartness relation axiomatised in Figure~\ref{fig:neq-axioms}.
+
+\dr{If removing min, we can also remove neq by replace it to $\neq$}
+
+\begin{figure}
+{\small
+\[\setlength{\arraycolsep}{1pt}
+\begin{array}{c}
+ \ruleform{neq} \\ \\
+\begin{array}{lll}
+ \textsc{NeqIrrRefl} & \forall x @.@ \neg neq(x,x) \\
+ \textsc{NeqSym}     & \forall x, y @.@ neq(x,y) => neq(y,x) \\
+ \textsc{NeqTrans}   & \forall x, y, z @.@ neq(x,y) => (neq(x,z) \lor neq(y,z)) \\
+ \textsc{NeqMin}     & \forall x, y @.@ neq(x,y) => (min(x) \land min(y)) \\
+ \textsc{NeqDisj}    & \forall \oln{x}{n}\oln{y}{m} @.@ neq(K(\ol{x}),K(\ol{y})) => \bigvee_i neq(x_i,y_i) \\
+                     & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+ \textsc{NeqApp}     & \forall f, g, x, y @.@ neq(app(f,x),app(g,y)) => \\
+                     & (neq(f,g) \lor neq(x,y))
+\end{array}
+\end{array}\]}
+\caption{An axiomatisation of neq
+    \label{fig:neq-axioms}}
+\end{figure}
+
+\paragraph{Equality versus partially applied contracts}
+
+With the exception from the extra $\bot$ guard, the expressibility of
+equality and partially applied contracts indeed do overlap. The example
+with @map fromJust@ above can be now instead be written:
+
+$$@map@ \in \{ @f@ \mid @f@ = @fromJust@ \} \to \{ @xs@ \mid @all isJust xs@ \} \to @CF@$$
+
+It is a bit clumsy, so we accept both versions.
+
+\subsection{Fixed point induction to separate goals}
+\dr{Can be moved to the induction section}
+
+\subsection{Printing finite countermodels}
+\dr{Maybe merge to the min section}
+
+\subsection{SMT 2.0 and triggers}
+\dr{I don't know where this section will fit}
+\paragraph{Support for primitive Integers}
+
+

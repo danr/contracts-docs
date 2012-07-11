@@ -1,0 +1,260 @@
+
+ In fact we may take
+one step further and equate all the non-interesting values of the domain to $\bot$.
+
+To achieve this effect, we update our Prelude theory axioms as follows:
+{\small
+\[\setlength{\arraycolsep}{1pt}
+\begin{array}{c}
+%% \ruleform{\Th{\Sigma}{P}} \\ \\
+\begin{array}{lll}
+ \textsc{AxDisjA} & \formula{\bad \neq \unr}  \\
+ \textsc{AxDisjB} & \formula{\forall \oln{x}{n}\oln{y}{m} @.@} \\
+                  & \formula{\;\;\highlight{K(\ol{x}){\neq}\unr\;\lor\;J(\ol{y}){\neq}\unr} =>
+                                  K(\ol{x}){\neq}J(\ol{y})} \\
+                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+                  & \text{ and } (J{:}\forall\as @.@ \oln{\tau}{m} -> S\;\as) \in \Sigma \\
+ %% \textsc{AxDisjCUnr} & \formula{\forall \oln{x}{n} @.@ \highlight{\neg min(\unr)}} \\
+ %%                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\ \\
+ \textsc{AxDisjCBad} & \formula{\forall \oln{x}{n} @.@ K(\ol{x}) \neq \bad} \\
+                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\ \\
+
+ \textsc{AxAppA}  & \formula{\forall \oln{x}{n} @.@ f(\ol{x}) = app(f_{ptr},\xs)} \\
+                  & \text{ for every } (f |-> \Lambda\as @.@ \lambda\oln{x{:}\tau}{n} @.@ u) \in P \\
+ %% \textsc{AxAppB}  & \formula{\forall \oln{x}{n} @.@ K(\ol{x}) = app(\ldots (app(x_K,x_1),\ldots,x_n)\ldots)} \\
+ %%                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+ \textsc{AxAppC}  & \formula{\forall x, app(\bad,x) = \bad \; /\ \; app(\unr,x) = \unr}    \\ \\
+ %% Not needed: we can always extend partial constructor applications to fully saturated and use AxAppC and AxDisjC
+ %% \textsc{AxPartA} & \formula{\forall \oln{x}{n} @.@ app(\ldots (app(x_K,x_1),\ldots,x_n)\ldots) \neq \unr} \\
+ %%                  & \formula{\quad\quad \land\; app(\ldots (app(x_K,x_1),\ldots,x_n)\ldots) \neq \bad} \\
+ %%                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{m} -> T\;\as) \in \Sigma \text{ and } m > n \\
+ %% \textsc{AxPartB} & \formula{\forall \oln{x}{n} @.@ app(f_{ptr},\xs) \neq \unr} \\
+ %%                  & \formula{\quad\land\; app(f_{ptr},\xs) \neq \bad} \\
+ %%                  & \formula{\quad\land\; \forall \oln{y}{k} @.@ app(f_{ptr},\xs) \neq K(\ol{y})} \\
+ %%                  & \text{ for every } (f |-> \Lambda\as @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P  \\
+ %%                  & \text{ and every } (K{:}\forall\as @.@ \oln{\tau}{k} -> T\;\as) \in \Sigma \text{ and } m > n  \\ \\
+ \textsc{AxInj}   & \formula{\forall \oln{y}{n} @.@ \highlight{K(\ys) \neq \unr\;\land\; y_i \neq \unr}} \\
+                  & \formula{\quad\qquad\qquad => \sel{K}{i}(K(\ys)) = y_i} \\
+                  & \text{for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \text{ and } i \in 1..n \\ \\
+ \textsc{AxCfA}   & \formula{\lcf{\unr} /\ \lncf{\bad}} \\
+ \textsc{AxCfB1}  & \formula{\forall \oln{x}{n} @.@ \bigwedge\lcf{\ol{x}}} => \lcf{K(\ol{x})} \\
+                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+ \textsc{AxCfB2}  & \formula{\forall \oln{x}{n} @.@ \lcf{K(\ol{x})}\;\highlight{\land\;K(\ol{x}) \neq \unr} => \bigwedge\lcf{\ol{x}}} \\
+                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma
+\end{array}
+\end{array}\]}
+
+
+\begin{figure}\small
+\[\begin{array}{c}
+\ruleform{\utrans{\Sigma}{\Gamma}{t \sim u} = \formula{\phi}} \\ \\
+\prooftree
+   \begin{array}{c} \ \\ \ \\
+   \etrans{\Sigma}{\Gamma}{e} = \formula{t}
+   \end{array}
+   ----------------------------------------{TUTm}
+   \begin{array}{l}
+   \utrans{\Sigma}{\Gamma}{s \sim e } = \formula{(s = t) \lor \highlight{\neg min(s)}} \ \\ \ \\ \ \\
+   \end{array}
+   ~~~~~
+  \begin{array}{l}
+  \etrans{\Sigma}{\Gamma}{e} = \formula{t} \quad
+  constrs(\Sigma,T) = \ol{K} \\
+  \text{for each branch}\;(K\;\oln{y}{l} -> e') \\
+  \begin{array}{l}
+           (K{:}\forall \cs @.@ \oln{\sigma}{l} -> T\;\oln{c}{k}) \in \Sigma \text{ and }
+           \etrans{\Sigma}{\Gamma,\ol{y}}{e'} = \formula{ t_K }
+  \end{array}
+  \end{array}
+  ------------------------------------------{TUCase}
+  {\setlength{\arraycolsep}{1pt}
+  \begin{array}{l}
+  \utrans{\Sigma}{\Gamma}{s \sim @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}} = \\
+  \;\;\formula{ \begin{array}{l}
+     \highlight{min(s)} => \\
+     \begin{array}{ll}
+          ( & \highlight{min(t)}\;\land \\
+            & (t = \bad => s = \bad)\;\land \\
+            & (\forall \ol{y} @.@ t = K_1(\ol{y}) => s = t_{K_1})\;\land \ldots \land \\
+            & (t \neq \bad\;\land\;t \neq K_1(\oln{{\sel{K_1}{i}}(t)}{})\;\land\;\ldots => s = \unr) \\
+          )
+%% (t = \bad /\ s = \bad)\;\lor\;(s = \unr)\;\lor \\
+%%                                 \quad      \bigvee(t = K(\oln{{\sel{K}{i}}(t)}{}) \land
+%%                                            s = t_K[\oln{\sel{K}{i}(t)}{}/\ol{y}])
+                   \end{array}
+     \end{array}}
+  \end{array}}
+  %% {       \setlength{\arraycolsep}{2pt}
+  %% \begin{array}{l}
+  %% \utrans{\Sigma}{\Gamma}{s \sim @case@\;e\;@of@\;\ol{K\;\ol{y}{->}e'}} = \\
+  %% \;\;\formula{
+  %%      \begin{array}{l} (\highlight{s{=}\unr})\;\lor \\
+  %%                           \;\; (\highlight{min(s) => min(t)}\;\land  \\
+  %%                           \quad((t = \bad /\ s = \bad)\;\lor \\
+  %%                           \quad\quad \bigvee(t = K(\oln{{\sel{K}{i}}(t)}{}) \land
+  %%                                          s = t_K[\oln{\sel{K}{i}(t)}{}/\ol{y}])))
+  %%                  \end{array}
+  %%          }
+  %% \end{array}}
+\endprooftree
+\end{array}\]
+\caption{Minimality-enabled definition translation}\label{fig:min-def-trans-min}
+\end{figure}
+
+
+
+We will explain the modifications to the axiomatization in more detail in later sections.
+%% In other words, we ensure that constructor applications are disjoint
+%% only for values we are interested in. We will explain each axiom separately later.
+%% Intuitively we wish to equate all terms that we are not interested in to $\unr$. We
+%% can never be interested in $\unr$ in the intended model because that means that during
+%% the evaluation of a term, which completed, we encountered a divergent term -- clearly a
+%% contradiction!
+What about function definitions? Figure~\ref{fig:etrans} has to be modified slightly as well,
+as Figure~\ref{fig:min-def-trans} shows.
+
+\begin{figure}\small
+\[\begin{array}{c}
+\ruleform{\utrans{\Sigma}{\Gamma}{t \sim u} = \formula{\phi}} \\ \\
+\prooftree
+   \begin{array}{c} \ \\ \ \\
+   \etrans{\Sigma}{\Gamma}{e} = \formula{t}
+   \end{array}
+   ----------------------------------------{TUTm}
+   \begin{array}{l}
+   \utrans{\Sigma}{\Gamma}{s \sim e } = \formula{(s = t) \lor \highlight{s = \unr}} \ \\ \ \\ \ \\
+   \end{array}
+   ~~~~~
+  \begin{array}{l}
+  \etrans{\Sigma}{\Gamma}{e} = \formula{t} \quad
+  constrs(\Sigma,T) = \ol{K} \\
+  \text{for each branch}\;(K\;\oln{y}{l} -> e') \\
+  \begin{array}{l}
+           (K{:}\forall \cs @.@ \oln{\sigma}{l} -> T\;\oln{c}{k}) \in \Sigma \text{ and }
+           \etrans{\Sigma}{\Gamma,\ol{y}}{e'} = \formula{ t_K }
+  \end{array}
+  \end{array}
+  ------------------------------------------{TUCase}
+  {\setlength{\arraycolsep}{1pt}
+  \begin{array}{l}
+  \utrans{\Sigma}{\Gamma}{s \sim @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}} = \\
+  \;\;\formula{ \begin{array}{l}
+     \highlight{s = \unr}\;\lor \\
+     \begin{array}{ll}
+          ( & \highlight{(t \neq \unr)}\;\land \\
+            & (t = \bad => s = \bad)\;\land \\
+            & (\forall \ol{y} @.@ t = K_1(\ol{y}) => s = t_{K_1})\;\land \ldots \land \\
+            & (t = \bad\;\lor\;t = K_1(\oln{{\sel{K_1}{i}}(t)}{})\;\lor\;\ldots) \\
+          )
+%% (t = \bad /\ s = \bad)\;\lor\;(s = \unr)\;\lor \\
+%%                                 \quad      \bigvee(t = K(\oln{{\sel{K}{i}}(t)}{}) \land
+%%                                            s = t_K[\oln{\sel{K}{i}(t)}{}/\ol{y}])
+                   \end{array}
+     \end{array}}
+  \end{array}}
+  %% {       \setlength{\arraycolsep}{2pt}
+  %% \begin{array}{l}
+  %% \utrans{\Sigma}{\Gamma}{s \sim @case@\;e\;@of@\;\ol{K\;\ol{y}{->}e'}} = \\
+  %% \;\;\formula{
+  %%      \begin{array}{l} (\highlight{s{=}\unr})\;\lor \\
+  %%                           \;\; (\highlight{min(s) => min(t)}\;\land  \\
+  %%                           \quad((t = \bad /\ s = \bad)\;\lor \\
+  %%                           \quad\quad \bigvee(t = K(\oln{{\sel{K}{i}}(t)}{}) \land
+  %%                                          s = t_K[\oln{\sel{K}{i}(t)}{}/\ol{y}])))
+  %%                  \end{array}
+  %%          }
+  %% \end{array}}
+\endprooftree
+\end{array}\]
+\caption{Minimality-enabled definition translation}\label{fig:min-def-trans}
+\end{figure}
+
+%% \\ \\
+%% \ruleform{ \Dtrans{\Sigma}{P} = \formula{\phi}} \\ \\
+%% \prooftree
+%%      \begin{array}{l}
+%%        \text{for each} (f |-> \Lambda\oln{a}{n} @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P \\
+%%           \quad \utrans{\Sigma}{\ol{x}}{f(\ol{x}) \sim u} = \formula{\phi}
+%%      \end{array}
+%%      --------------------{TDefs}
+%%      \Dtrans{\Sigma}{P} = \bigwedge_{P} \formula{\forall \ol{x} @.@ \phi}
+%% \endprooftree
+
+Now operationally we may instrument the evaluation relation to keep track of the set of
+closed terms that appear during evaluation. The instrumented relation appears in
+Figure~\ref{fig:opsem-instrumented}. Observe that if $P |- e \Downarrow w \curly S$ then
+$S$ is a {\em finite set} of terms.
+
+
+\begin{figure}\small
+\[\begin{array}{c}
+\ruleform{P |- e \Downarrow v \curly S} \\ \\
+\prooftree
+\begin{array}{c} \ \\
+\end{array}
+%% \begin{array}{c}
+%% (f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P \\
+%% P |- e_1 \Downarrow f\;[\taus]\;\oln{e}{m-1} \curly S_1 \\
+%% P |- u[\ol{\tau}/\ol{a}][\ol{e},e_2/\ol{x}] \Downarrow w \curly S
+%% \end{array}
+%% ------------------------------------{EBeta}
+%% P |- e_1\;e_2 \Downarrow w
+  S = heads(v)
+-------------------------------------{EVal}
+P |- v \Downarrow v \curly S
+~~~~
+\begin{array}{c}
+(f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P \\
+P |- u[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow v \curly S_1 \\
+S_2 = heads(f[\ol{\tau}]\;\oln{e}{m})
+\end{array}
+-------------------------------------{EFun}
+P |- f[\ol{\tau}]\;\oln{e}{m} \Downarrow v \curly S_1 \cup S_2
+~~~~~
+\begin{array}{c}
+P |- e_1 \Downarrow v_1 \curly S_1 \quad
+P |- v_1\;e_2 \Downarrow w \curly S_2
+\end{array}
+------------------------------------------------{EApp}
+P |- e_1\;e_2 \Downarrow w \curly S_1 \cup S_2 \cup \{ e_1\;e_2 \}
+~~~~~
+\begin{array}{c}
+P |- e_1 \Downarrow @BAD@ \curly S
+\end{array}
+------------------------------------------------{EBadApp}
+P |- e_1\;e_2 \Downarrow @BAD@ \curly S \cup \{ e_1\;e_2 \}
+\endprooftree \\ \\
+\ruleform{heads(e) = S} \\ \\
+\begin{array}{lcl}
+   heads(f\;[\ol{\tau}]) & = & \{ f\;[\ol{\tau}] \} \\
+   heads(e_1\;e_2)       & = & \{ e_1\;e_2 \} \cup heads(e_1) \\
+   heads(\_)            & = & \emptyset
+\end{array} \\ \\
+\ruleform{P |- u \Downarrow v \curly S} \\ \\
+\prooftree
+P |- e \Downarrow v \curly S
+-------------------------------------{EUTm}
+P |- e \Downarrow v \curly S
+~~~~~
+\begin{array}{c}
+P |- e \Downarrow K_i[\ol{\sigma}_i](\ol{e}_i) \curly S_1 \quad
+P |- e'_i[\ol{e}_i/\ol{y}_i] \Downarrow w \curly S_2
+\end{array}
+------------------------------------{ECase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \Downarrow w \curly S_1 \cup S_2
+~~~~~
+\begin{array}{c}
+P |- e \Downarrow @BAD@ \curly S \\
+\end{array}
+------------------------------------{EBadCase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \Downarrow @BAD@ \curly S
+%% \begin{array}{c}
+%% (f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}) \in D \\
+%% D |- e[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow @BAD@ \\
+%% \end{array}
+%% -------------------------------------{EBadCase}
+%% D |- f[\ol{\tau}]\;\oln{e}{m} \Downarrow @BAD@
+\endprooftree
+\end{array}\]
+\caption{Redex-instrumented operational semantics}\label{fig:opsem-instrumented}
+\end{figure}

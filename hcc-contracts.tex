@@ -454,8 +454,8 @@ $$
 \ruleform{\dbrace{\Ct}_{\rho} \subseteq D_{\infty}} }
 \\ \\
 \dbrace{x \mid e}_\rho
-  & =  & \{ d \mid \unroll{d} = \bot \, \lor \, \unroll{\dbrace{e}_{\rho,x|->d}} 
-                \in \{ \ret{\injKZ{True} , \bot} \} \} 
+  & =  & \{ d \mid \unroll{d} = \bot \, \lor \, \unroll{\dbrace{e}_{\rho,x|->d}}
+                \in \{ \ret{\injKZ{True} , \bot} \} \}
 \\[1em]
 \dbrace{(x{:}\Ct_1) -> \Ct_2}_{\rho}
  & = & \{ d \mid
@@ -574,8 +574,8 @@ We have developed a formal semantics for expressions as well as contracts, so it
 see how we can use this semantics to show that our translation to first-order logic is sound
 with respect to this semantics.
 
-Our plan is to give an interpretation (in the FOL sense of the term) to our 
-translated FOL terms, using the carrier set $D_\infty$ as our model. 
+Our plan is to give an interpretation (in the FOL sense of the term) to our
+translated FOL terms, using the carrier set $D_\infty$ as our model.
 Happily this is straightforward to do:
 \[\begin{array}{rcl}
    \linterp{f(\ol{t})} & = & \dapp(\dbrace{f},\ol{\linterp{t}}) \\
@@ -655,24 +655,24 @@ programs correct, we would like to reassure them that that is not the case as we
 shall see in the next section.
 
 \paragraph{Lazy semantics simplifies the translation}
-We have mentioned previously (Section~\ref{ssect:trans-exprs}) that the 
-laziness of $\theLang$ helps in keeping the translation simple, and here we 
-explain why. 
+We have mentioned previously (Section~\ref{ssect:trans-exprs}) that the
+laziness of $\theLang$ helps in keeping the translation simple, and here we
+explain why.
 
 Whenever we use universal quantification in the logic, we really quantify over
-{\em any} denotation, including $\bot$ and $\injBad$. In a call-by-name language, 
-given a function @f x = True@, the axiom $\forall x @.@ f(x) = \injKZ{True}$ 
-is true in the intended denotational model. However, in a call-by-value setting, $x$ 
-is allowed to be interpreted as $\bot$. That means that the unguarded axiom is 
+{\em any} denotation, including $\bot$ and $\injBad$. In a call-by-name language,
+given a function @f x = True@, the axiom $\forall x @.@ f(x) = \injKZ{True}$
+is true in the intended denotational model. However, in a call-by-value setting, $x$
+is allowed to be interpreted as $\bot$. That means that the unguarded axiom is
 actually not true, because $f\,\bot \not= \injKZ{True}$.
 Instead we need the following annoying variation:
 \[  \forall x @.@ x \neq bad \land x \neq \unr => f(x) = t \]
 Moreover, the axioms for the $app(\cdot,\cdot)$ combinator have to be modified
-to perform checks that the argument is not $\bot$ or $\injBad$ before actually 
-calling a function.   In a call-by-name language these guards are needed 
+to perform checks that the argument is not $\bot$ or $\injBad$ before actually
+calling a function.   In a call-by-name language these guards are needed
 only for @case@ and the function part of $app$.
 
-These complications lead to a more complex first-order theory in the call-by-value 
+These complications lead to a more complex first-order theory in the call-by-value
 case.
 
 %% value, including $\bot$. Very rarely do we have to add a condition that

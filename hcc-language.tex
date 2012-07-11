@@ -268,8 +268,8 @@ crash regardless of what context it is plugged into (see Section~\ref{s:cf-fol})
 
 Our goal is to answer the question ``does expression $e$ satisfy
 contract $C$?''.  Our plan is to translate the expression and the
-contract into a first-order logic (FOL) term and formula respectively, and get a standard 
-FOL prover to do the heavy lifting. In this section we formalise our translation, 
+contract into a first-order logic (FOL) term and formula respectively, and get a standard
+FOL prover to do the heavy lifting. In this section we formalise our translation,
 and describe how we use it to verify contracts.
 
 \subsection{The FOL language}
@@ -422,7 +422,7 @@ We are primarily interested in reasoning about equality, so we might
 hope for this informal guiding principle:
 
 \begin{quote}
-If we can prove\footnote{From an appropriate axiomatisation of the semantics of 
+If we can prove\footnote{From an appropriate axiomatisation of the semantics of
 programs.} in FOL that $\etrans{}{}{e_1} = \etrans{}{}{e_2}$ then
 $e_1$ and $e_2$ are semantically equivalent.
 \end{quote}
@@ -436,8 +436,8 @@ is given in Figure~\ref{fig:etrans}.
 The function $\ptrans{}{P}$ translates a program to a conjunction of formulae,
 one for each definition $d$, using $\dtrans{}{d}$ to translate
 each definition.
-The first clause in $\cal D$s right-hand side uses $\cal U$ to 
-translate the right hand side $u$, and quantifies over the $\ol{x}$.  
+The first clause in $\cal D$s right-hand side uses $\cal U$ to
+translate the right hand side $u$, and quantifies over the $\ol{x}$.
 We will deal with the second clause of $\cal D$
 in Section~\ref{s:hof}.
 
@@ -447,10 +447,10 @@ simply asserts the equality $f(\ol{x}) = \etrans{}{}{e}$.
 That is, we use a new function $f$ in the logic for each function definition in the
 program, and assert that any application of $f$ is equal to (the logical translation of)
 $f$'s right hand side. Notice that we erase type arguments in the translation
-since they do not affect the semantics. You might think that the translation 
-$f(\ol{x}) = \etrans{}{}{e}$ is entirely obvious but, surprisingly, it is only correct 
-because we are in a call-by-name setting. The same equation is problematic in a 
-call-by-value setting -- an issue 
+since they do not affect the semantics. You might think that the translation
+$f(\ol{x}) = \etrans{}{}{e}$ is entirely obvious but, surprisingly, it is only correct
+because we are in a call-by-name setting. The same equation is problematic in a
+call-by-value setting -- an issue
 we return to towards the end of Section~\ref{s:soundness}.
 
 Lastly $\etrans{}{}{e}$ deals with expressions.  We will deal with
@@ -459,7 +459,7 @@ functions and application shortly
 are straightforward.  Notice that $\etrans{}{}{@BAD@} = bad$, and recall
 that @BAD@ is the $\theLang$-term used for an inexhaustive @case@ or a call
 to @error@.  It follows from our guiding principle
-that for any $e$, if we manage to prove in FOL that $ \etrans{}{}{e} = bad $, 
+that for any $e$, if we manage to prove in FOL that $ \etrans{}{}{e} = bad $,
 then the source program $e$
 must be semantically equivalent to @BAD@, meaning that it definitely
 crashes.
@@ -484,7 +484,7 @@ $$
 $$
 assuming that @map@ and @f@ are top-level functions in the $\theLang$-program, and
 @xs@ is a local variable.  Once enough $app$ applications stack up, so that
-$@map@_{ptr}$ is applied to two arguments, we can invoke the @map@ function directly 
+$@map@_{ptr}$ is applied to two arguments, we can invoke the @map@ function directly
 in the logic, an idea we express with the following axiom:
 $$
 \forall x y.\;app(app(@map@_{ptr}, x), y) = @map@(x,y)
@@ -528,14 +528,14 @@ Why do we need the last clause? Consider the function @not@:
   not False = True
 \end{code}
 Suppose we claim that $@not@ \in @CF@ \rightarrow @CF@$, which is patently true.
-But if we lack the last clause above, the claim 
+But if we lack the last clause above, the claim
 is \emph{not} true in every model;
-for example @not@ might crash when given the (ill-typed but crash-free) 
+for example @not@ might crash when given the (ill-typed but crash-free)
 argument @3@.  The third clause above excludes this possibility by
 asserting that the result of @not@ is the special crash-free constant $unr$
-if the scrutinee is ill-typed (i.e. not $bad$ and not built with the 
+if the scrutinee is ill-typed (i.e. not $bad$ and not built with the
 constructors of the type).  This is the whole reason we need $unr$ in the first place.
-In general, if $\etrans{}{}{e} = unr$ is provable in the logic, then $e$ is ill-typed, 
+In general, if $\etrans{}{}{e} = unr$ is provable in the logic, then $e$ is ill-typed,
 or divergent.
 
 Of course, we also need to axiomatise the behaviour of data constructors and
@@ -598,7 +598,7 @@ $unr$ is crash-free, and that $bad$ is not.  That turns out to be all that we ne
 That completes our formally-described --- but so far only informally-justified --- translation
 from a $\theLang$ program and a set of contract claims, into first-order logic.
 To a first approximation, we can now hand the generated axioms from the program and
-our axiomatisation to an FOL theorem prover and ask it to use them to prove the 
-translation of the contract claims. 
+our axiomatisation to an FOL theorem prover and ask it to use them to prove the
+translation of the contract claims.
 
 

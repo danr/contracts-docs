@@ -1,4 +1,9 @@
-\newcommand{\ThMin}{\Th_{\infty}^{min}}
+\newcommand{\ThMin}{\Th^{min}}
+\newcommand{\utransmin}[3]{\utrans{#1}{#2}{#3}^{min}}
+\newcommand{\dtransmin}[3]{\dtrans{#1}{#2}{#3}^{min}}
+\newcommand{\SDownarrow}{\downarrow}
+\newcommand{\ctransmin}[3]{\ctrans{#1}{#2}{#3}^{min}}
+\newcommand{\calI}{{\cal J}}
 
 So far we have described the basic translation of the denotational semantics, programs, and contracts
 to first-order logic. However, to enable verification of contracts in practice we must consider two
@@ -194,7 +199,6 @@ Finally, the selector axiom group \rulename{AxInj} has been modified to guard th
 %% \end{array}\]
 %% \caption{Program translation with minimization}\label{fig:min-def-trans-min}
 %% \end{figure}
-\newcommand{\SDownarrow}{\downarrow}
 
 The translation of programs to accomodate minimization requires only modification
 to the $\uutrans{}{\Gamma}{u}$ judgement, which now become $\uutrans{}{\Gamma}{u}^{min}$. Its definition
@@ -215,8 +219,11 @@ models are directly induced from finite traces of failed programs.
 
 
 \subsection{Minimization in contracts}
+<<<<<<< HEAD
 \newcommand{\ctransmin}[3]{\ctrans{#1}{#2}{#3}^{min}}
 \newcommand{\calI}{{\cal J}}
+=======
+>>>>>>> ae0d204... Add an tex file about min
 
 We have showed that, given a strict trace, our new theory admits a finite model. But what is its proving
 power? In order to prove a contract we may have to appeal to some axiom from the theory. But, alas, most
@@ -686,5 +693,3 @@ our testsuite.
 
 
 
-\subsection{Induction}\label{sect:induction}
->>>>>>> 13b09431cb36e883a0edcd170861378eb7ccb48e

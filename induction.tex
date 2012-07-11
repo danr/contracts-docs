@@ -1,35 +1,33 @@
-\label{sect:induction}
-%% \subsection{Induction}\label{sect:induction}
 
 An important practical extension is the ability to prove contracts about recursive functions
 using induction. For instance, we might want to prove that @length@ satisfies $\CF -> \CF$.
 \begin{code}
-  length []     = Z 
+  length []     = Z
   length (x:xs) = S (length xs)
 \end{code}
-In the second case we need to show that the result of @length xs@ is crash-free but we do not 
-have this information so the proof gets stuck, often resulting in the FOL-solver looping. 
+In the second case we need to show that the result of @length xs@ is crash-free but we do not
+have this information so the proof gets stuck, often resulting in the FOL-solver looping.
 
 A naive approach would be to perform induction over the list argument of @length@ -- however
-in Haskell datatypes may be lazy infinite streams and ordinary induction is not necessarily 
-a valid proof principle. Fortunately, we can still appeal to {\em fixpoint induction}. The 
-fixpoint induction sheme that we use for @length@ above would be to {\em assume} that the 
-contract holds for the occurence some function @length_rec@ inside the body of its definition, 
+in Haskell datatypes may be lazy infinite streams and ordinary induction is not necessarily
+a valid proof principle. Fortunately, we can still appeal to {\em fixpoint induction}. The
+fixpoint induction sheme that we use for @length@ above would be to {\em assume} that the
+contract holds for the occurence some function @length_rec@ inside the body of its definition,
 and then try to prove it for the function:
 \begin{code}
-  length []     = Z 
+  length []     = Z
   length (x:xs) = S (length_rec xs)
 \end{code}
 
 Formally, our induction scheme is:
 \begin{definition}[Induction sheme]\label{def:induction}
-To prove that $\dbrace{g} \in \dbrace{\Ct}$ for a function 
+To prove that $\dbrace{g} \in \dbrace{\Ct}$ for a function
 $g\;\as\;\ol{x{:}\tau} = e[g]$ (meaning $e$ contains
 some occurrences of $g$), we perform the following steps:
 \begin{itemize*}
   \item Generate function symbols $g^{\circ}$, $g^{\bullet}$
-  \item Generate the theory formula \[ \phi = \Th \land 
-             \ptrans{}{P \cup g^{\bullet}\;\as\;\ol{x{:}\tau} = e[g^{\circ}]} \] 
+  \item Generate the theory formula \[ \phi = \Th \land
+             \ptrans{}{P \cup g^{\bullet}\;\as\;\ol{x{:}\tau} = e[g^{\circ}]} \]
   \item Prove that the query $\phi \land \ctrans{}{}{g^{\circ} \in \Ct} \land \neg \ctrans{}{}{g^{\bullet} \in \Ct}$
         is unsatisfiable.
 \end{itemize*}
@@ -38,33 +36,33 @@ some occurrences of $g$), we perform the following steps:
 
 Why is this approach sound? The crucial step here is the fact that contracts are admissible predicates.
 \begin{theorem}[Contract admissibility]
-If $d_i \in \dbrace{\Ct}$ for all elements of a chain $d_1 \sqsubseteq d_2 \sqsubseteq \ldots$ then the limit of the chain 
+If $d_i \in \dbrace{\Ct}$ for all elements of a chain $d_1 \sqsubseteq d_2 \sqsubseteq \ldots$ then the limit of the chain
 $\sqcup d_i \in \dbrace{\Ct}$. Moreover, $\bot \in \dbrace{\Ct}$.
 \end{theorem}
 \begin{proof} By induction on the contract $\Ct$; for the $\CF$ case we get the result from Lemma~\ref{lem:cf-admissible}.
-For the predicate case we get the result from the fact that the denotations of programs 
+For the predicate case we get the result from the fact that the denotations of programs
 are continuous in $D_{\infty}$. The arrow case follows by induction.
 \end{proof}
 
 We can then prove the soundness of our induction scheme.
 \begin{theorem} The induction scheme in Definition~\ref{def:induction} is correct. \end{theorem}
-\begin{proof} We need to show that: 
+\begin{proof} We need to show that:
 $\dbrace{P}^{\infty}(g) \in \dbrace{\Ct}$ and hence, by admissibility it is enough to find
 a chain whose limit is $\dbrace{P}^{\infty}(g)$ and such that every element is in $\dbrace{\Ct}$.
-Let us consider the chain $\dbrace{P}^{k}(g)$ so that $\dbrace{P}^0(g) = \bot$ and 
-$\dbrace{P}^{k+1}(g) = \dbrace{P}_{(\dbrace{P}^{k})}(g)$ whose limit is $\dbrace{P}^{\infty}(g)$. We 
+Let us consider the chain $\dbrace{P}^{k}(g)$ so that $\dbrace{P}^0(g) = \bot$ and
+$\dbrace{P}^{k+1}(g) = \dbrace{P}_{(\dbrace{P}^{k})}(g)$ whose limit is $\dbrace{P}^{\infty}(g)$. We
 know that $\bot \in \dbrace{\Ct}$ so, by using contract admissiblity, all we need to show is
-that if $\dbrace{P}^{k}(g) \in \dbrace{\Ct}$ then $\dbrace{P}^{k+1}(g) \in \dbrace{\Ct}$. 
+that if $\dbrace{P}^{k}(g) \in \dbrace{\Ct}$ then $\dbrace{P}^{k+1}(g) \in \dbrace{\Ct}$.
 
-To show this, we can assume a model where the denotational interpretation ${\cal I}$ has been 
+To show this, we can assume a model where the denotational interpretation ${\cal I}$ has been
 extended so that ${\cal I}(g^{\circ}) = \dbrace{P}^{k}(g)$ and ${\cal I}(g^{\bullet}) = \dbrace{P}^{k+1}(g)$.
-By proving that the formula 
-\[ \phi \land \ctrans{}{}{g^{\circ} \in \Ct} \land \neg \ctrans{}{}{g^{\bullet} \in \Ct} \] 
-is unsatisfiable, since $\langle D_{\infty},{\cal I}\rangle \models \phi$ and 
-$\langle D_{\infty},{\cal I}\rangle \models \ctrans{}{}{g^{\circ} \in \Ct}$, we learn 
-that $\langle D_{\infty},{\cal I}\rangle \models \ctrans{}{}{g^{\bullet} \in \Ct}$, 
+By proving that the formula
+\[ \phi \land \ctrans{}{}{g^{\circ} \in \Ct} \land \neg \ctrans{}{}{g^{\bullet} \in \Ct} \]
+is unsatisfiable, since $\langle D_{\infty},{\cal I}\rangle \models \phi$ and
+$\langle D_{\infty},{\cal I}\rangle \models \ctrans{}{}{g^{\circ} \in \Ct}$, we learn
+that $\langle D_{\infty},{\cal I}\rangle \models \ctrans{}{}{g^{\bullet} \in \Ct}$,
 and hence $\dbrace{P}^{k+1}(g) \in \dbrace{\Ct}$.
-\end{proof} 
+\end{proof}
 
 Note that contract admissibility is {\em absolutely essential} for the
 soundness of our induction scheme, and is not a property that holds of
@@ -75,16 +73,16 @@ Haskell definition:
   f (S x) = 1 : f x
   f Z     = [0]
 \end{code}
-Let us try to check if the $\forall x @.@ @f@(x) \neq @ones@$ is true in 
-the denotational model, using fixpoint induction. The case for $\bot$ holds, 
-and so does the case for the @Z@ constructor. For the $@S@\;x$ case, we can 
+Let us try to check if the $\forall x @.@ @f@(x) \neq @ones@$ is true in
+the denotational model, using fixpoint induction. The case for $\bot$ holds,
+and so does the case for the @Z@ constructor. For the $@S@\;x$ case, we can
 assume that $@f@(x) \neq @ones@$ and we can easily prove that this implies that
-$@f@(@S@\;x) \neq @ones@$. Nevertheless, the property is {\em not true} -- just pick 
-a counterexample $\dbrace{@s@}$ where @s = S s@. What happened here is that the property 
+$@f@(@S@\;x) \neq @ones@$. Nevertheless, the property is {\em not true} -- just pick
+a counterexample $\dbrace{@s@}$ where @s = S s@. What happened here is that the property
 is denotationally true of all the elements of the following chain
-\[ \bot \sqsubseteq \injK{S}{\bot} \sqsubseteq \injK{S}{\injK{S}{\bot}} \sqsubseteq \ldots \] 
-but is false in the limit of this chain. In other words $\neq$ is not admissible and our 
-induction scheme is plain nonsense for non-admissible predicates. 
+\[ \bot \sqsubseteq \injK{S}{\bot} \sqsubseteq \injK{S}{\injK{S}{\bot}} \sqsubseteq \ldots \]
+but is false in the limit of this chain. In other words $\neq$ is not admissible and our
+induction scheme is plain nonsense for non-admissible predicates.
 
 Finally, we have observed that for many practical cases, a
 straightforward generalization of our lemma above for mutually
