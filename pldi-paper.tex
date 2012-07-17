@@ -1,0 +1,392 @@
+% Remove trailing whitespace in emacs by
+%
+%     (add-hook 'before-save-hook 'delete-trailing-whitespace)
+%
+% But require a final newline:
+%
+%     (setq require-final-newline 't)
+
+\documentclass[preprint,nocopyrightspace]{sigplanconf}
+
+\usepackage{hcc-techreport}
+
+
+\begin{document}
+\preprintfooter{\textbf{--- EARLY DRAFT to PLDI 2013 ---}}
+
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dblfloatpagefraction}{0.8}
+
+%%% Extra definitions -- move to hcc-techreport at some point (carefully to not break that!)
+\newcommand{\Ct}{{\tt C}}
+\newcommand{\CF}{{\tt CF}}
+\newcommand{\True}{\textit{True}}
+\newcommand{\False}{\textit{False}}
+\newcommand{\Bool}{\mathop{Bool}}
+\newcommand{\ys}{\ol{y}}
+\newcommand{\Th}[2]{{\cal T}_{#1,#2}}
+\newcommand{\Ecf}{\textsc{Ecf}}
+\newcommand{\oln}[2]{\ol{#1}^{#2}}
+\newcommand{\tmar}[2]{\mathop{tmar}_{#1}(#2)}
+\newcommand{\tyar}[2]{\mathop{tyar}_{#1}(#2)}
+\newcommand{\ar}{n}
+\newcommand{\lcf}[1]{\textsf{cf}(#1)}
+\newcommand{\lcfZ}{\textsf{cf}}
+\newcommand{\lncf}[1]{\neg\textsf{cf}(#1)}
+\newcommand{\unr}{\mathop{unr}}
+\newcommand{\bad}{\mathop{bad}}
+\newcommand{\sel}[2]{\mathop{sel\_#1\!_{#2}}}
+\newcommand{\ctrans}[3]{{\cal C}\{\!\!\{#3\}\!\!\}}
+\newcommand{\etrans}[3]{{\cal E}\{\!\!\{#3\}\!\!\}}
+\newcommand{\utrans}[3]{{\cal U}(#3)\{\!\!\{#2\}\!\!\}}
+
+% Get rid of this -- just temporay
+\newcommand{\uutrans}[3]{{\cal U}\{\!\!\{#3\}\!\!\}}
+
+\newcommand{\dtrans}[2]{{\cal D}\{\!\!\{#2\}\!\!\}}
+\newcommand{\ptrans}[2]{{\cal P}\{\!\!\{#2\}\!\!\}}
+%% Gadgets of domain theory
+
+
+
+\newcommand{\rollK}{\mathsf{roll}}
+\newcommand{\unrollK}{\mathsf{unroll}}
+\newcommand{\bindK}{\mathsf{bind}}
+\newcommand{\retK}{\mathsf{ret}}
+\newcommand{\injK}[2]{\mathsf{#1}(#2)}
+\newcommand{\injKZ}[1]{\mathsf{#1}}
+\newcommand{\injFun}[1]{\mathsf{Fun}(#1)}
+\newcommand{\injBad}{\mathsf{Bad}}
+
+% \newcommand{\roll}[1]{\rollK(#1)}
+% \newcommand{\unroll}[1]{\unrollK(#1)}
+% \newcommand{\bind}[2]{\bindK_{#1}(#2)}
+% \newcommand{\ret}[1]{\retK(#1)}
+\newcommand{\roll}[1]{#1}
+\newcommand{\unroll}[1]{#1}
+\newcommand{\bind}[2]{#1(#2)}
+\newcommand{\ret}[1]{#1}
+\newcommand{\inj}[2]{{#1}(#2)}
+
+\newcommand{\dlambda}{\mathsf{\lambda}}
+\newcommand{\curry}{\mathsf{curry}}
+\newcommand{\eval}{\mathsf{eval}}
+\newcommand{\uncurry}{\mathsf{incurry}}
+\newcommand{\dapp}{\mathsf{app}}
+
+\newcommand{\unitcpo}{{\sf{\bf 1}}}
+\newcommand{\VarCpo}{\textit{Var}}
+\newcommand{\FVarCpo}{\textit{FunVar}}
+\newcommand{\interp}[3]{[\![#1]\!]_{\langle {#2},{#3}\rangle}}
+\newcommand{\dbrace}[1]{[\![#1]\!]}
+\newcommand{\linterp}[1]{{\cal I}(#1)}
+\newcommand{\lassign}[1]{\mu(#1)}
+\newcommand{\elab}[1]{\rightsquigarrow \formula{#1}}
+\newcommand{\Fcf}{F_{\lcfZ}}
+\newcommand{\definable}[1]{{\mathop{def}}(#1)}
+\newcommand{\curly}{\rightsquigarrow}
+\newcommand{\Min}{\cal M}
+\newcommand{\mlinterp}[1]{{\cal I}^{min}(#1)}
+
+\renewcommand{\Th}{{\cal T}}
+
+\newcommand{\theLang}{\lambda_{\sf HALO}}
+
+\title{A new approach to static contract checking for higher-order lazy programs}
+
+\authorinfo{Dimitrios Vytiniotis \\ Simon Peyton Jones}
+           {Microsoft Research}{}
+
+\authorinfo{Dan Ros\'{e}n \\ Koen Claessen}
+           {Chalmers University}{}
+%% \authorinfo{Nathan Collins}
+%%            {Portland State University}{}
+\maketitle
+\makeatactive
+
+\begin{abstract}
+Even well-typed programs can go wrong, by encountering a pattern-match
+failure, or simply returning the wrong answer.  An
+increasingly-popular response is to allow programmers to write
+\emph{contracts} that express semantic properties, such as
+crash-freedom or some useful post-condition.
+We study the \emph{static verification} of such contracts.
+Our main contribution is a novel translation to first-order logic
+of both Haskell programs, and contracts written in Haskell,
+all justified by denotational semantics. This translation enables us to prove
+that functions satisfy their contracts using an off-the-shelf first-order logic
+theorem prover.
+\end{abstract}
+
+\section{Introduction}\label{s:intro}
+  \input{hcc-introduction}
+
+\section{A higher-order lazy language and its contracts}\label{sect:language}
+  \input{hcc-language}
+
+\section{Soundness through denotational semantics}
+   \label{sect:contracts}\label{ssect:denot}
+  \input{hcc-contracts}
+
+\subsection{Contract checking as satisfiability}\label{sect:soundness}
+  \input{hcc-verification}
+
+\section{Minimization}\label{sect:min}
+   \input{hcc-min}
+
+\section{Induction}\label{sect:extensions}
+  \input{hcc-extensions}
+
+\section{Implementation and practical experience}\label{sect:implementation}
+  \input{hcc-implementation}
+
+\section{Discussion}\label{sect:discussion}
+  \input{hcc-discussion}
+
+\section{Related work}\label{sect:related}
+  \input{hcc-related}
+
+\section{Future work}\label{sect:future}
+  \input{hcc-future}
+
+\paragraph{Acknowledgements}
+Thanks to Richard Eisenberg for helpful feedback and Nathan Collins
+for early work on a prototype of our translation.
+
+\bibliographystyle{plainnat}
+\bibliography{hcc-popl}
+
+\appendix
+
+\section{A finite model construction}\label{sect:finite-model-proof}
+\input{hcc-finite-model-proof}
+
+\section{Min in terms of unreachable}
+\input{min-as-not-unr}
+
+\section{The intended min-imal model}
+\input{intended-min-model}
+
+\end{document}
+
+%% \begin{abstract}
+%% The Glasgow Haskell Compiler is an optimizing
+%% compiler that expresses and manipulates first-class equality proofs in
+%% its intermediate language.  We describe a simple, elegant technique that
+%% exploits these equality proofs to support \emph{deferred type errors}.
+%% The technique requires us to treat equality proofs as possibly-divergent
+%% terms; we show how to do so without losing either soundness or
+%% the zero-overhead cost model that the programmer expects.
+%% \end{abstract}
+
+%% \category{D.3.3}{Language Constructs and Features}{Abstract data types}
+%% \category{F.3.3}{Studies of Program Constructs}{Type structure}
+
+%% \terms{Design, Languages}
+
+%% \keywords{Type equalities, Deferred type errors, System FC}
+
+%% \section{Denotational semantics}
+
+
+%% \begin{lemma}[Evaluation preserves equality]
+%% If $\Sigma;\cdot |- e : \tau \rightsquigarrow t$ and
+%%    $\Sigma |- D \rightsquigarrow \phi_{\Sigma,D}$ and
+%%    $D |- e \Downarrow w$ then
+%%    $\Sigma;\cdot |- w : \tau \rightsquigarrow s$ and $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} |- t = s$.
+%% \end{lemma}
+%% \begin{proof} By induction on the evaluation $\Sigma |- e \Downarrow w$. \end{proof}
+
+
+%% \begin{lemma}[Logic deduces sound value equalities]
+%% Assume that $\Sigma;\cdot |- w : \tau \rightsquigarrow t$ and
+%% $D |- value(w)$ and $\Sigma |- D \rightsquigarrow \phi_{\Sigma,D}$.
+%% Then
+%% \begin{enumerate*}
+%%   \item If $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} |- t = \bad$ then $w = @BAD@$.
+%%   \item If $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} |- t = K(\ol{t})$ then $w = K[\taus](\ol{e})$, such
+%%         that $\Sigma;\cdot |- \ol{e : \tau} \rightsquigarrow \ol{s}$, and $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} |- \ol{t = s}$.
+%%   \item $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} |- t \neq \unr$.
+%% \end{enumerate*}
+%% \end{lemma}
+%% \begin{proof}
+%% The proof of all three cases is by inversion on the $D |- value(w)$ derivation,
+%% apealling to the disjointness axioms.
+%% %% \begin{enumerate*}
+%% %%   \item By inversion on the $D |- value(w)$ derivation. In the case of \rulename{VBad} we are done.
+%% %%   The case of \rulename{VFun} cannot happen, by the axiom set \rulename{AxPartB}. The case of \rulename{VCon}
+%% %%   cannot happen either: If the application is saturated then \rulename{AxDisjC} shows it is impossible; if it
+%% %%   is not saturated we can always extend it and use \rulename{AxAppC} and \rulename{AxDisjC}.
+%% %%   \item Again by inversion on $D |- value(w)$ derivation. The case of \rulename{VBad} is easy. The case for
+%% %%   \rulename{VCon} follows by injectivity of constructors. The case of \rulename{VFun} can't happen by
+%% %%   \rulename{AxPartB}.
+%% %%   \item Direct inversion on $D |- value(w)$, and using disjointness axioms.
+%% %% \end{enumerate*}
+%% \end{proof}
+
+%% Basic soundness will be stated as follows.
+%% \begin{theorem}
+%% If we have that
+%% \begin{enumerate*}
+%%   \item $\Sigma;\cdot |- e : \tau$ and $\Sigma;\cdot |- \Ct : \tau$
+%%   \item $\Sigma |- D \rightsquigarrow \phi_{\Sigma,D}$
+%%   \item $\Sigma;\cdot |- e \in \Ct \rightsquigarrow \phi$
+%% \end{enumerate*}
+%% and $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} /\ \neg \phi$ is unsatisfiable then $\Sigma;D |- e \in \Ct$.
+%% \end{theorem}
+%% \begin{proof}
+%%  {\bf TODO}
+%% \end{proof}
+
+%% A remark: a formula $\phi$ is unsatisfiable iff $\neg \phi$ is valid in FOL. Hence, if
+%% $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} /\ \neg \phi$ is unsatisfiable then
+%% $\neg (\Th{\Sigma}{D} /\ \phi_{\Sigma,D}) \lor \phi$ must be valid, and by completeness of FOL,
+%% $\Th{\Sigma}{D} /\ \phi_{\Sigma,D} |- \phi$.
+
+%% \section{Denotational semantics as FOL models}
+
+
+
+%% \begin{figure}\small
+%% \[\begin{array}{c}
+%% %% \ruleform{ \dtrans{\Sigma}{d} = \formula{\phi} } \\ \\
+%% %% \prooftree
+%% %%   \begin{array}{c}
+%% %%   (f{:}\forall\oln{a}{n} @.@ \oln{\tau}{m} -> \tau) \in \Sigma \quad
+%% %%   \etrans{\Sigma}{\ol{a},\ol{x{:}\tau}}{e} = \formula{t}
+%% %%   \end{array}
+%% %%   -------------------------------------------------------------------{TFDef}
+%% %%   \dtrans{\Sigma}{(f |-> \Lambda\oln{a}{n} @.@ \lambda\oln{x{:}\tau}{m} @.@ e)} =  \formula{ (\forall x @.@ f(\oln{x}{m}) = t) }
+%% %%   ~~~~~
+%% %%   \begin{array}{l}
+%% %%   (f{:}\forall\oln{a}{n} @.@ \oln{\tau}{m} -> \tau) \in \Sigma \quad
+%% %%   \etrans{\Sigma}{\ol{a},\ol{x{:}\tau}}{e} = \formula{t} \\
+%% %%   constrs(\Sigma,T) = \ol{K} \\
+%% %%   \text{for each branch}\;(K\;\oln{y}{l} -> e') \\
+%% %%   \quad \begin{array}{l}
+%% %%            (K{:}\forall \cs @.@ \oln{\sigma}{l} -> T\;\oln{c}{k}) \in \Sigma \\
+%% %%            \etrans{\Sigma}{\ol{a},\ol{x{:}\tau},\ol{y{:}\sigma[\taus/\cs]}}{e'} = \formula{ t_K }
+%% %%         \end{array}
+%% %%   \end{array}
+%% %%   -------------------------------------------------------------------{TCaseDef}
+%% %%   \begin{array}{l}
+%% %%    \dtrans{\Sigma}{(f |-> \Lambda\oln{a}{n} @.@ \lambda\oln{x{:}\tau}{m} @.@ @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'})} = \\
+%% %%    \quad \formula{ \begin{array}{lll} \forall \oln{x}{m} @.@ & \hspace{-7pt} (t = \bad /\ f(\ol{x}) = \bad)\; \lor \\
+%% %%                                                                     & \hspace{-7pt}(f(\ol{x}) = \unr)\;\lor \\
+%% %%                                                                     & \hspace{-7pt}(\bigvee(t = K(\oln{{\sel{K}{i}}(t)}{i\in 1..l})\;/\ \\
+%% %%                                                                     & \hspace{-5pt}\quad f(\ol{x}) = t_K[\oln{\sel{K}{i}(t)}{i\in 1..l}/\ol{y}]))
+%% %%                                                  \end{array}
+%% %%                         }
+%% %% \end{array}
+%% %% \endprooftree  \\ \\
+%% \end{array}\]
+%% \caption{Definition elaboration to FOL}\label{fig:typing}
+%% \end{figure}
+
+%% {\bf DV: So basically this is Simon's strategy of side-stepping the
+%% lack of full abstraction and the associated problems with it: In
+%% the end of the day we only care about base contracts, in fact
+%% really only about the contract ``is this program crash-free'', so
+%% we don't have to make a big fuss about higher-order contracts and
+%% their operational semantics. We have to motivate it carefully and
+%% also be clear that for the intellectually curious reader who really
+%% wants to know what statement we have proved for a function contract
+%% when the prover says ``unsat'' we might want to give a full
+%% definition of the denotational meaning of contracts including both
+%% base and higher-order. I think we do not have the time luxury to
+%% look for more elaborate solutions (such as definable denotations
+%% and all that crazy stuff) to match the operational and the
+%% denotational semantics for higher-order contracts. Fullstop.}
+
+%% \section{Minimizing countermodels}
+
+
+
+
+%% \newpage
+
+%% \section{Contract checking soundness}
+
+%% \section{Contracts}
+
+%% The syntax that we use for contracts is in Figure~\ref{fig:contract-syntax}.
+%% Contracts are typed (here, just monomorphically), and we give an operational
+%% semantics for contract satisfaction in the same figure.
+
+%% \begin{figure*}\small
+%% \[\begin{array}{c}
+%% \ruleform{\Sigma;\Gamma |- \Ct } \\ \\
+%% \prooftree
+%% \Sigma;\Delta,x{:}\tau |- e : \Bool
+%% ---------------------------------------{TCBase}
+%% \Sigma;\Delta |- \{ (x{:}\tau) \mid e \} : \tau
+%% ~~~~
+%% \begin{array}{c}
+%% \Sigma;\Delta |- \Ct_1 : \tau \\
+%% \Sigma;\Delta,(x{:}\tau) |- \Ct_2 : \tau'
+%% \end{array}
+%% ---------------------------------------{TCArr}
+%% \Sigma;\Delta |- (x{:}\Ct_1) -> \Ct_2 : \tau -> \tau'
+%% ~~~~
+%% \Sigma;\Delta |- \Ct_1 : \tau \quad \Sigma;\Delta |- \Ct_2 : \tau
+%% ---------------------------------------{TCConj}
+%% \Sigma;\Delta |- \Ct_1 \& \Ct_2 : \tau
+%% ~~~~
+%% \phantom{\Gamma}
+%% ---------------------------------------{TCf}
+%% \Sigma;\Delta |- \CF : \tau
+%% \endprooftree \\ \\
+%% \ruleform{\Sigma;P |- e \in \Ct} \\ \\
+%% \prooftree
+%%  P \not|- e \Downarrow
+%% -----------------------------------------------{ECDiv}
+%%  \Sigma;P |- e \in \{ (x{:}\tau) \mid e' \}
+%%  ~~~~
+%%  P |- e'[e/x] \Downarrow \True
+%% -------------------------------------------{ECTrue}
+%%  \Sigma;P |- e \in \{ (x{:}\tau) \mid e' \}
+%%  ~~~~
+%%  P \not|- e'[e/x] \Downarrow
+%%  ------------------------------------------{ECCDiv}
+%%  \Sigma;P |- e \in \{ (x{:}\tau) \mid e' \}
+%%  ~~~~~
+%%  \begin{array}{c}
+%%  \Sigma;\cdot |- \Ct_1 : \tau \\
+%%  \text{for all } u, \Sigma;\cdot |- u : \tau ==> \Sigma;P |- e\;u \in \Ct_2[u/x]
+%%  \end{array}
+%%  --------------------------------------------{ECArr}
+%%  \Sigma;P |- e \in (x{:}\Ct_1) -> \Ct_2
+%%  ~~~~
+%%  \begin{array}{c}
+%%  \Sigma,\cdot |- e : \tau  \\
+%%  e \in \Ecf \quad \text{(See Section~\ref{sect:cf})}
+%%  %% \text{for all } u, (\Sigma;\cdot |- u : \tau -> \Bool) /\ (@BAD@ \notin u) ==> \neg (P |- u\;e \Downarrow @BAD@)
+%%  \end{array}
+%%  --------------------------------------------------------------------------------------------{ECf}
+%%  \Sigma;P |- e \in \CF
+%%  ~~~~~
+%%  \Sigma;P |- e \in \Ct_1 \quad \Sigma;P |- e \in \Ct_2
+%%  --------------------------------------------------------------------------------------------{ECConj}
+%%  \Sigma;P |- e \in \Ct_1 \& \Ct_2
+%% \endprooftree
+%% \end{array}\]
+%% \caption{Contract syntax and semantics}\label{fig:contract-syntax}
+%% \end{figure*}
+
+%% \section{Induction and admissibility}
+%% {\bf TODO}
+
+
+%% \section{Minimization}
+%% {\bf TODO}
+
+%% \section{Some ideas}
+%% Sometimes the $\CF$ contract stands in our way e.g. for library stuff. It might
+%% be interesting to explore some user-defined pragma to side-step the $\bad$ case
+%% in some pattern matches (i.e. make it on demand, pretty much as $F^{\star}$ does, where
+%% only the user's assertions matter.
+%% %% \acks
+%% %% Acknowledgements here
