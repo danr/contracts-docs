@@ -1,7 +1,7 @@
 \paragraph{Contracts that do not hold}
 \label{ssect:countersat}
 
-In practice, programmers will often propose contracts that do not hold. 
+In practice, programmers will often propose contracts that do not hold.
 For example, consider the following definitions:
 \begin{code}
   length []     = Z
@@ -12,7 +12,7 @@ For example, consider the following definitions:
 \end{code}
 Suppose that we would like to check the (false) contract:
    \[ @length@ \in \CF -> \{ x \mid @isZero@\;x\} \]
-\emph{A satisfiability-based checker 
+\emph{A satisfiability-based checker
 will simply diverge} trying to construct a counter model for the
 negation of the above query; we have confirmed that this is indeed the
 behaviour of several tools (Z3, Equinox, Eprover).  Why?  When a
@@ -35,9 +35,9 @@ erroneous contract.  Tantalisingly, there exists a very simple
 counterexample, e.g. @[Z]@, and that single small example is all the
 programmer needs to see the falsity of the contract.
 
-Addressing this problem is a challenging (but essential) 
-direction for future work, and we are currently 
-working on a modification of our theory that admits the denotational model, but 
+Addressing this problem is a challenging (but essential)
+direction for future work, and we are currently
+working on a modification of our theory that admits the denotational model, but
 also permits {\em finite models} generated from counterexample traces.
 %% These ideas are reminiscent to the techniques that the Nitpick \dv{IS this right?} tool
 %% uses for generating finite counterexamples in Isabelle. \dv{Someone please check!}.
@@ -58,24 +58,24 @@ instead used a \emph{denotational semantics} for contracts (Figure~\ref{f:den-se
 It is natural to ask whether or not the two semantics are identical.
 
 From computational adequacy, Theorem~\ref{thm:adequacy} we can easily state
-the following theorem: 
-\begin{corollary} Assume that $e$ and $\Ct$ contain no term variables and 
-assume that $\ctrans{}{\cdot}{e \in \{x \mid e_p\}} = \formula{\phi}$. It is the case 
+the following theorem:
+\begin{corollary} Assume that $e$ and $\Ct$ contain no term variables and
+assume that $\ctrans{}{\cdot}{e \in \{x \mid e_p\}} = \formula{\phi}$. It is the case
 that $\langle D_\infty,{\cal I}\rangle \models \phi$ if and only iff either
 $P \not|- e \Downarrow$ or $P \not|- e_p[e/x] \Downarrow$ or $P |- e_p[e/x] \Downarrow \True$. \end{corollary}
 Hence, the operational and denotational semantics of \emph{predicate contracts} coincide.
 However, the correspondence is not precise for \emph{dependent function contracts}.
-Recall the operational definition of contract satisfaction for 
+Recall the operational definition of contract satisfaction for
 a function contract:
-\[\begin{array}{l} 
+\[\begin{array}{l}
    e \in (x{:}\Ct_1) -> \Ct_2 \text{ iff} \\
    \text{for all } e' \text{ such that } (e' \in \Ct_1) \text{ it is } e\;e' \in \Ct_2[e'/x]
-\end{array}\] 
-The denotational specification (Figure~\ref{f:den-sem-contracts}) 
+\end{array}\]
+The denotational specification (Figure~\ref{f:den-sem-contracts})
 says that for all denotations $d'$ such that
-$d' \in \dbrace{\Ct_1}$, it is the case that 
-$\dapp(\dbrace{e},d') \in \dbrace{\Ct_2}_{x |->d'}$. 
- 
+$d' \in \dbrace{\Ct_1}$, it is the case that
+$\dapp(\dbrace{e},d') \in \dbrace{\Ct_2}_{x |->d'}$.
+
 Alas there are {\em more} denotations than images of terms in $D_{\infty}$,
 and that breaks the correspondence. Consider the program:
 \begin{code}
@@ -88,39 +88,39 @@ and that breaks the correspondence. Consider the program:
         else True
 \end{code}
 Also consider now this candidate contract for $f$:
-\[ @f@ \in \CF -> (\CF -> \CF -> \CF) -> \CF \]
-Under the \emph{operational} definition of contract satisfaction, 
+\[ @f@ \in (\CF -> \CF -> \CF) -> \CF \]
+Under the \emph{operational} definition of contract satisfaction,
 @f@ indeed satisfies the contract.
 To reach @BAD@ we have to pass both conditionals.
 The first ensures that @h@ evaluates at least one of its
 arguments, while the second will diverge if either argument is evaluated.
-Hence @BAD@ cannot be reached, and the contract is satisfied. 
+Hence @BAD@ cannot be reached, and the contract is satisfied.
 
-However, \emph{denotationally} it is possible to have the classic 
-parallel-or function, $por$, defined as 
+However, \emph{denotationally} it is possible to have the classic
+parallel-or function, $por$, defined as
 follows:
 \[\begin{array}{lcl}
-  por\;\bot\;\bot & = & \bot \\ 
+  por\;\bot\;\bot & = & \bot \\
   por\;\bot\;\injKZ{True} & = & \injKZ{True} \\
-  por\;\injKZ{True}\;\bot & = & \injKZ{True} \\ 
+  por\;\injKZ{True}\;\bot & = & \injKZ{True} \\
   por\;\injKZ{False}\;\injKZ{False} & = & \injKZ{False}
-\end{array}\] 
+\end{array}\]
 We have to define $por$ in the language of denotational semantics, because
-we cannot write it in Haskell --- that is the point!  For convenience, 
-though, we use pattern matching notation instead of our 
+we cannot write it in Haskell --- that is the point!  For convenience,
+though, we use pattern matching notation instead of our
 language of domain theory combinators.
 The rest of the equations (for @BAD@ arguments) are induced by
 monotonicity and we may pick whatever boolean value we like when both
 arguments are @BAD@.
 
 Now, this is denotationally a $\CF -> \CF -> \CF$ function, but it
-will pass \emph{both} conditionals, 
+will pass \emph{both} conditionals,
 yielding @BAD@. Hence $app(@f@,por) = \injBad$, and @f@'s contract does not hold.
 So we have a concrete case where an expression may satisfy its
 contract operationally but not denotationally, because of the usual
-loss of full abstraction: there are more tests than programs in the denotational world. 
+loss of full abstraction: there are more tests than programs in the denotational world.
 Due to contra-variance
-we expect that the other inclusion will fail too. 
+we expect that the other inclusion will fail too.
 
 This is not a serious problem in practice.
 After all the two definitions mostly coincide, and
@@ -132,42 +132,42 @@ operationally-reasonable term.
 Finally, is it possible to define an operational model for our FOL theory that interpreted
 equality as contextual equivalence? Probably this could be made to work, although we believe
 that the formal clutter from syntactic manipulation of terms could be worse than the current
-denotational approach. 
+denotational approach.
 
 
 \paragraph{Polymorphic crash-freedom}
 
-Observe that our axiomatisation of crash-freedom in Figure~\ref{fig:prelude} 
+Observe that our axiomatisation of crash-freedom in Figure~\ref{fig:prelude}
 includes only axioms for data constructors. In fact, our denotational interpretation
 $\Fcf^{\infty}$ allows more axioms, such as:
 \[\begin{array}{l}
     \forall x y @.@ \lcf{x} \land \lcf{y} => \lcf{app(x,y)}
-\end{array}\] 
-This axiom is useful if we wish to give directly a $\CF$ contract to a value of 
+\end{array}\]
+This axiom is useful if we wish to give directly a $\CF$ contract to a value of
 arrow type. For instance, instead of specifying that @map@ satisfies the contract
 $(\CF -> \CF) -> \CF -> \CF$ one may want to say that it satisfies the contract
-$\CF -> \CF -> \CF$. With the latter contract we need the previous axiom to be 
-able to apply the function argument of @map@ to a crash-free value and get a 
-crash-free result. 
+$\CF -> \CF -> \CF$. With the latter contract we need the previous axiom to be
+able to apply the function argument of @map@ to a crash-free value and get a
+crash-free result.
 
 In some situations, the following axiom might be beneficial as well:
 \[\begin{array}{l}
     (\forall \xs @.@ \lcf{f(\xs)}) => \lcf{f_{ptr}}
 \end{array}\]
-If the result of applying a function to any possible argument is crash-free then 
-so is the function pointer. This allows us to go in the inverse direction as before, 
+If the result of applying a function to any possible argument is crash-free then
+so is the function pointer. This allows us to go in the inverse direction as before,
 and pass a function pointer to a function that expects a $\CF$ argument. However notice
 that this last axiom introduces a quantified assumption, which might lead to significant
 efficiency problem.
 
 Ideally we would like to say that $\dbrace{\CF} = \dbrace{\CF \rightarrow \CF}$,
-but that is not quite true.  In particular, 
+but that is not quite true.  In particular,
 \[\begin{array}{l}
    (\forall x @.@ \lcf{app(y,x)}) => \lcf{y}
 \end{array}\]
 is {\em not} valid in the denotational model. For instance consider the
-value $\injK{K}{\injBad}$ for $y$. The left-hand side is going to always 
-be true, because the application is ill-typed and will yield $\bot$, but $y$ 
+value $\injK{K}{\injBad}$ for $y$. The left-hand side is going to always
+be true, because the application is ill-typed and will yield $\bot$, but $y$
 is not itself crash-free.
 
 
