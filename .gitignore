@@ -1,0 +1,18 @@
+# Latex temp
+*.aux
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.vrb
+*.tptp
+*.pdf
+*.bbl
+*.blg
+
+# Emacs temp
+\#*
+.\#*
+*~
+
