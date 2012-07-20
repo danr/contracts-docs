@@ -1,0 +1,78 @@
+
+The translation also handles @DEFAULT@ patterns. Here is one example:
+
+\begin{code}
+isVar x = case x of
+    DEFAULT -> False
+    Var     -> True
+\end{code}
+
+Understandably, we translate this to
+$$\forall x . isVar(var) = true \land (x \neq var => isVar(x) = false)$$
+
+So far so good. What is a bit more curios is if you do a case on the
+\emph{same expression} twice, and use default patterns both times.
+This happens very often: after desugaring, functions that pattern matches
+on two arguments like @zip@ and @drop@, are translated this way, but let's
+look at a minimal example, a somewhat weird implementation of boolean or,
+and a simple contract for it:
+
+\begin{code}
+(||) :: Bool -> Bool -> Ok
+True  || y    = True
+x     || True = True
+False || y    = False
+
+or_cf = (||) ::: CF --> CF --> CF
+\end{code}
+
+The or function is desugared like this to GHC Core, and running
+the simple expression optimiser:
+\begin{code}
+lvl_lb7 :: Bool
+lvl_lb7 = Control.Exception.Base.patError
+    @ GHC.Types.Bool "DefaultBug.hs:\
+            \(18,1)-(20,21)|function ||"
+
+|| :: Bool -> Bool -> Bool
+|| =
+  \ (x :: Bool) (y :: Bool) ->
+    case x of {
+      __DEFAULT ->
+        case y of _ {
+          __DEFAULT ->
+            case x of _ {
+              __DEFAULT -> lvl_lb7;
+              False -> False
+            };
+          True -> True
+        };
+      True -> True
+    }
+\end{code}
+
+So how is this translated? Let's look at the branch that goes to
+@lvl_lb7@. The first @case@ on @x@ says that it must be different from
+@True@, @UNR@ and @Bad@. Ignoring the case on @y@ for now, the second
+says that @x@ must be different from @False@ this time, in addition to
+@UNR@ and @Bad@. In fact, we end up with something like this:
+
+\[\begin{array}{rl}
+\forall @x@ , \; @y@ \; . \;
+    & @x@ \neq @True@ \land \\
+    & @x@ \neq @False@ \land \\
+    & @x@ \neq @UNR@ \land \\
+    & @x@ \neq @BAD@ \land \\
+    & @y@ \neq @True@ \land \\
+    & @y@ \neq @UNR@ \land \\
+    & @y@ \neq @BAD@ => ((@x || y@) = @lvl_lb7@ (= @BAD@))
+\end{array}\]
+
+Which might at first look ok, what happens if we run @Zero || Zero@?
+Then we get that @Zero || Zero = BAD@, becase something ill-typed causes
+a pattern match failure that doesn't exist for well typed arguments.
+This makes this property satisfiable!
+
+What we want is to make ill-typed arguments go to @UNR@. By using the
+optimiser, this is correctly translated. Same goes for more complicated
+functions like @zip@.

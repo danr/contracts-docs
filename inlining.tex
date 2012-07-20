@@ -1,0 +1,76 @@
+
+The inliner inlines non-recursive, non-casing functions, when inlining
+the function would not insert a new lambda.  When dealing with
+contracts, it allows inserting a lambda after the @:->@ because it uses
+higher-order abstract syntax.
+
+By using the inliner, we can now without hassle use GHC's
+optimiser. It is now on by default. It chops up contracts into several
+top-level functions, but the inliner then restores the structure by
+making it one big definition. Before, the translator would carry
+around a context and buggily inline sometimes, but now this is
+separated.
+
+When using optimisation, we also get rid of the nasty bug when an expression
+is cased on twice, with default branches. Without optimisation, you can get
+unsoundness with functions pattern-matching on two arguments.
+
+We have two uses of inlining so far:
+
+\paragraph{Reassembling statements} When using optimisation, the
+contracts get splitted up into several entries. For example,
+a contract like @map_cf = map ::: (CF --> CF) --> CF --> CF@
+might look like this in the optimised GHC core:
+
+\begin{code}
+map_cf = (:::) map a3_rke
+
+a3_rke = (-->) a3_rp7 CF
+
+a3_rp7 = (-->) a3_rzt a3_rke
+
+a3_rzt = (-->) CF CF
+\end{code}
+
+We could translate these definitions to our internal representation of
+contracts, carrying around the right hand sides of expressions, and
+this is what we did before. This has a few complications. For one,
+it might not look as regular as above: sometimes we get a redefinition
+of @(:->)@ to some new variable name and the implementation got really
+messy. Further, we want to know what functions are used in a contract,
+including inside @Pred@, and this is just one function call if the
+statement is reassembled, rather than trying to figure this out while
+walking around definitions.
+
+\paragraph{Destroying sharing}
+When translating function definitions, we don't want to have
+unnecessary function around. An especially annoying pattern is:
+
+\begin{code}
+foo x = case x of
+    K1 -> lvl_fk4
+    K2 y -> foo y
+
+lvl_fk4 = BAD
+\end{code}
+
+With endless variantions, where @lvl_fk4@ can get a real-world token,
+and so on. Introducing these extra symbols give an extra overhead for
+theorem provers.
+
+A function that is neither recursive nor using case is a good
+candidate for removal.
+
+We such top-level lifted CAFs for sharing, but we should
+try to destroy all sharing since everything is memoized in
+theorem provers anyway. So we don't want to see:
+
+\begin{code}
+zero = Zero
+one = Succ zero
+two = Succ one
+\end{code}
+
+Such things should always be inlined to not introduce new constants.
+For instance, @eprover@ is sometimes confused by such constants.
+
