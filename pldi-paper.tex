@@ -1,6 +1,6 @@
 \documentclass[preprint,nocopyrightspace]{sigplanconf}
 
-\usepackage{hcc-techreport}
+\usepackage{techreport}
 
 
 \begin{document}
@@ -12,7 +12,7 @@
 \renewcommand{\floatpagefraction}{0.8}
 \renewcommand{\dblfloatpagefraction}{0.8}
 
-%%% Extra definitions -- move to hcc-techreport at some point (carefully to not break that!)
+%%% Extra definitions -- move to techreport at some point (carefully to not break that!)
 \newcommand{\Ct}{{\tt C}}
 \newcommand{\CF}{{\tt CF}}
 \newcommand{\True}{\textit{True}}
@@ -115,53 +115,53 @@ theorem prover.
 \end{abstract}
 
 \section{Introduction}\label{s:intro}
-  \input{hcc-introduction}
+  \input{introduction}
 
 % % \section{Checking Haskell contracts in practice}\label{s:examples}
-% %   \input{hcc-examples}
+% %   \input{examples}
 
 \section{A higher-order lazy language and its contracts}\label{sect:language}
-  \input{hcc-language}
+  \input{language}
 
 \section{Soundness through denotational semantics}
    \label{sect:contracts}\label{ssect:denot}
-  \input{hcc-contracts}
+  \input{contracts}
 
 \subsection{Contract checking as satisfiability}\label{sect:soundness}
-  \input{hcc-verification}
+  \input{verification}
 
 \section{Induction}\label{sect:induction}
   \input{induction}
 
 \section{Implementation and practical experience}\label{sect:implementation}
-  \input{hcc-implementation}
+  \input{implementation}
 
 \section{Discussion}\label{sect:discussion}
-  \input{hcc-discussion}
+  \input{discussion}
 
 \section{Related work}\label{sect:related}
-  \input{hcc-related}
+  \input{related}
 
 \section{Future work}\label{sect:future}
-  \input{hcc-future}
+  \input{future}
 
 \paragraph{Acknowledgements}
 Thanks to Richard Eisenberg for helpful feedback and Nathan Collins
 for early work on a prototype of our translation.
 
 \bibliographystyle{plainnat}
-\bibliography{hcc-popl}
+\bibliography{references}
 
 \appendix
 
 \section{Minimization}
-   \input{hcc-min}
+   \input{min}
 
 \section{Extensions}
   \input{extensions}
 
 \section{A finite model construction}\label{sect:finite-model-proof}
-\input{hcc-finite-model-proof}
+\input{finite-model-proof}
 
 \section{Min in terms of unreachable}
 \input{min-as-not-unr}

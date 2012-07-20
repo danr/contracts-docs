@@ -1,6 +1,8 @@
 \newcommand{\ThMin}{\Th^{min}}
 \newcommand{\utransmin}[3]{\utrans{#1}{#2}{#3}^{min}}
 \newcommand{\dtransmin}[3]{\dtrans{#1}{#2}{#3}^{min}}
+\newcommand{\ctransmin}[3]{\ctrans{#1}{#2}{#3}^{min}}
+\newcommand{\calI}{{\cal J}}
 \newcommand{\SDownarrow}{\downarrow}
 
 So far we have described the basic translation of the denotational semantics, programs, and contracts
@@ -217,11 +219,6 @@ models are directly induced from finite traces of failed programs.
 
 
 \subsection{Minimization in contracts}
-<<<<<<< HEAD
-\newcommand{\ctransmin}[3]{\ctrans{#1}{#2}{#3}^{min}}
-\newcommand{\calI}{{\cal J}}
-=======
->>>>>>> ae0d204... Add an tex file about min
 
 We have showed that, given a strict trace, our new theory admits a finite model. But what is its proving
 power? In order to prove a contract we may have to appeal to some axiom from the theory. But, alas, most
@@ -406,7 +403,7 @@ and ask a theorem prover for a model of this formula. If it is unsatisfiable, th
 Is it true that everything that we can prove using
 the $min$-less theory, is also provable using the $min$-enabled translation?
 That is most likely not the case, although we are not aware of counterexamples. However, as we show
-in the Section~\ref{hcc-evaluation} we have identified that our heuristics for minimization work much
+in the Section~\ref{evaluation} we have identified that our heuristics for minimization work much
 better than the $min$-less version: For the 90 small programs in our testsuite, the theorem provers
 finish on average faster when a contract is provable, and a finite model checker always finds a finite
 model in the case where there exists a counterexample in the $min$-enabled translation.
