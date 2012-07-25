@@ -17,9 +17,9 @@ unsoundness with functions pattern-matching on two arguments.
 
 We have two uses of inlining so far:
 
-\paragraph{Reassembling statements} When using optimisation, the
-contracts get splitted up into several entries. For example,
-a contract like @map_cf = map ::: (CF --> CF) --> CF --> CF@
+\paragraph{Reassembling statements} When using optimisation and the
+lambda lifter, the contracts get splitted up into several entries. For
+example, a contract like @map_cf = map ::: (CF --> CF) --> CF --> CF@
 might look like this in the optimised GHC core:
 
 \begin{code}
