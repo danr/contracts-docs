@@ -1,78 +1,165 @@
 
-The translation also handles @DEFAULT@ patterns. Here is one example:
+Can we translate cases with branches that matches anything?  In
+Haskell we typically see them as a pattern match on @_@, and in GHC
+Core they are written as the first alternative and called @DEFAULT@,
+but to be similar to Haskell, we will write them with an underscore
+last instead. It could be beneficial to translate them because they
+can save a lot of axioms, the archetypal example is going from
+$O(n^2)$ to $O(n)$ cases for equality on a data type with $n$
+constructors.
+
+For now, we explore a simple example:
 
 \begin{code}
-isVar x = case x of
-    DEFAULT -> False
-    Var     -> True
+    id x = case x of
+        True -> True
+        _    -> False
 \end{code}
 
-Understandably, we translate this to
-$$\forall x . isVar(var) = true \land (x \neq var => isVar(x) = false)$$
-
-So far so good. What is a bit more curios is if you do a case on the
-\emph{same expression} twice, and use default patterns both times.
-This happens very often: after desugaring, functions that pattern matches
-on two arguments like @zip@ and @drop@, are translated this way, but let's
-look at a minimal example, a somewhat weird implementation of boolean or,
-and a simple contract for it:
+Since the case already had a default branch, instead of the usual to
+put a @_ -> UNR@ branch, an @UNR -> UNR@ branch is inserted, making
+the case ``look'' like this:
 
 \begin{code}
-(||) :: Bool -> Bool -> Ok
-True  || y    = True
-x     || True = True
-False || y    = False
-
-or_cf = (||) ::: CF --> CF --> CF
+    id x = case x of
+        True -> True
+        BAD  -> BAD
+        UNR  -> UNR
+        _    -> False
 \end{code}
 
-The or function is desugared like this to GHC Core, and running
-the simple expression optimiser:
-\begin{code}
-lvl_lb7 :: Bool
-lvl_lb7 = Control.Exception.Base.patError
-    @ GHC.Types.Bool "DefaultBug.hs:\
-            \(18,1)-(20,21)|function ||"
-
-|| :: Bool -> Bool -> Bool
-|| =
-  \ (x :: Bool) (y :: Bool) ->
-    case x of {
-      __DEFAULT ->
-        case y of _ {
-          __DEFAULT ->
-            case x of _ {
-              __DEFAULT -> lvl_lb7;
-              False -> False
-            };
-          True -> True
-        };
-      True -> True
-    }
-\end{code}
-
-So how is this translated? Let's look at the branch that goes to
-@lvl_lb7@. The first @case@ on @x@ says that it must be different from
-@True@, @UNR@ and @Bad@. Ignoring the case on @y@ for now, the second
-says that @x@ must be different from @False@ this time, in addition to
-@UNR@ and @Bad@. In fact, we end up with something like this:
+Now the translation to FOL seems straightforward, and for this code
+it amounts to these four axioms:
 
 \[\begin{array}{rl}
-\forall @x@ , \; @y@ \; . \;
-    & @x@ \neq @True@ \land \\
-    & @x@ \neq @False@ \land \\
-    & @x@ \neq @UNR@ \land \\
-    & @x@ \neq @BAD@ \land \\
-    & @y@ \neq @True@ \land \\
-    & @y@ \neq @UNR@ \land \\
-    & @y@ \neq @BAD@ => ((@x || y@) = @lvl_lb7@ (= @BAD@))
+ & @id@(@True@) = @True@, \\
+ & @id@(@BAD@) = @BAD@, \\
+ & @id@(@UNR@) = @UNR@, \\
+\forall x . &
+    (x \neq @True@ \land
+     x \neq @BAD@ \land
+     x \neq @UNR@) =>  @id@(x) = @False@
 \end{array}\]
 
-Which might at first look ok, what happens if we run @Zero || Zero@?
-Then we get that @Zero || Zero = BAD@, becase something ill-typed causes
-a pattern match failure that doesn't exist for well typed arguments.
-This makes this property satisfiable!
+Great, and a contract like $\{ @id@ \mid @CF@ -> @CF@ \}$ goes through
+just fine.
 
-What we want is to make ill-typed arguments go to @UNR@. By using the
-optimiser, this is correctly translated. Same goes for more complicated
-functions like @zip@.
+Let's make our simple function a bit more complicated:
+
+\begin{code}
+    id2 x = case x of
+        True -> True
+        _    -> case x of
+            False -> False
+            _     -> error "Unreachable!"
+\end{code}
+
+It looks innocent enough, right? Let us see it with the @UNR@ and
+@BAD@ glasses as well:
+
+\begin{code}
+    id2 x = case x of
+        True -> True
+        BAD  -> BAD
+        UNR  -> UNR
+        _    -> case x of
+            False -> False
+            BAD  -> BAD
+            UNR  -> UNR
+            _     -> error "Unreachable!''
+\end{code}
+
+When tranlating this declaration, we collect ``constraints'' of
+inequalities in the default branches. Let's see what we have collected
+in the branch that goes to the error in the code for @id2@ above.
+From the first case, we know that @x@ is neither of @True@, @BAD@,
+@UNR@ and the second case we also get to know that @x@ is not
+@False@. So the final axiom for this branch looks like this:
+
+\[\begin{array}{rl}
+\forall x . &
+    (x \neq @True@ \land
+     x \neq @False@ \land
+     x \neq @BAD@ \land
+     x \neq @UNR@) =>  \\ & @id2@(x) = @BAD@
+\end{array}\]
+
+Here, the call to @error@ has been translated to @BAD@. Does the
+contract $\{ @id2@ \mid @CF@ -> @CF@ \}$ go through now? \emph{No!}
+The reason for this is that an untyped argument - let's say @Nothing@ -
+will with this translation of @id2@ return @BAD@:
+
+$$@id2@(@Nothing@) = @BAD@$$
+
+Our system is built upon untyped arguments should go to @UNR@!  The
+example above was after all written in Haskell rather than i GHC Core.
+Then, does it occur in the GHC Core at all? \emph{Yes,} non-trivial
+pattern-matches can actually be actually translated to casing on the
+same variable several times. One simple example is this @or@ function:
+
+\begin{code}
+    or :: Bool -> Bool -> Bool
+    or True  y    = True
+    or x     True = True
+    or False y    = False
+\end{code}
+
+After desugaring, we get this code in (prettified) Core:
+
+\begin{code}
+or :: Bool -> Bool -> Ok
+or = \ (x :: Bool) (y :: Bool) ->
+    case x of {
+        True -> True
+        _ -> case y of {
+            True -> True
+            _ -> case x of {
+                False -> False
+                _ -> patError "function or"
+\end{code}
+
+This Core snippet for @or@ exhibits exactly the same problem as @id2@:
+it cases on @x@ twice, and throws @BAD@ on an untyped argument.  These
+examples seems to suggest that the problem is local: that is, it's a
+problem that we try to translate many cases in one go, and we should
+instead transform the program so there is only one top level case at
+each function. But alas, no, this is not the situation at
+hand.
+
+We revisit the @id2@ example, and
+lift out the inner case
+\footnote{This is written in in source Haskell, and with a data type
+  with a a few more constructors than two, this function will have
+  default branches analogous to above, even with core optimisations.
+}:
+
+\begin{code}
+    id x = case x of
+        True -> True
+        _    -> id' x
+
+    {-# NOINLINE id2 #-}
+    id2 x = case x of
+        False -> False
+        _     -> error "Unreachable!"
+\end{code}
+
+By inserting @UNR -> UNR@ branches, we still get with an ill-typed
+argument @x@, we have $@id x@ = @error "Unreachable!"@ = @BAD@$.
+Unfortunately, this means that the obvious way to translate default
+patterns is unsound in our system, and we have not found any
+alternative ways to translate it sound and efficient.
+
+However, there is still a lot of light in the tunnel. What we do
+instead is simply ``unrolling'' the default branches.
+If we have a branch @DEFAULT -> rhs@, then for each constructor @K@
+that is not mentioned in the case, we insert a @K -> rhs@
+branch. While this might sound devastating and leads to case
+explosion, it turns out that for instance @z3@ is still very efficient
+with this translation.
+
+
+
+
+
+
