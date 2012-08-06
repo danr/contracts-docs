@@ -1,0 +1,73 @@
+
+\dr{This is a bit confusing since for fixed point induction calls
+    we can actually do better (since none calls fixed point
+    functions), so we could introduce this without talking about
+    induction and that this principle works iteratively.
+    It might also help if I wrote down the rules I use to translate}
+
+We can make things a lot easier for the theorem provers by giving them
+smaller theories to consider, and sometimes really trimming down the
+theories is the only way to make it tractable for them. This is why we
+never add unnecessary axioms for data types or declarations. But we
+can do better that that. This section explains a way to follow the
+pattern matchings in a recursive function to make a separate theory
+for every right hand side of a function. To illustrate, we will
+use the @filter@ function:
+
+\begin{code}
+    filter = \p ys -> case ys of
+        (:) x xs -> case p x of
+            True -> (:) x (filter p xs)
+            False -> filter p xs
+        [] -> []
+\end{code}
+
+To prove a contract with induction on this function, we instead
+consider this:
+
+\begin{code}
+    filter' = \p ys -> case ys of
+        x:xs -> case p x of
+            True -> x:filter_rec p xs
+            False -> filter_rec p xs
+        [] -> []
+\end{code}
+
+As usual, we assert the induction hypothesis for @filter_rec@, and
+want to prove the contracts for @filter'@ above. Let's just pick
+a simple contract, namely $@filter@ \in (@CF@ -> @CF@) -> @CF@ -> @CF@$.
+We could just dump the definition of @filter'@ and the contract
+and hope the theorem prover will find its way, but we can generate
+a theory for every right hand side in the definition above.
+
+Let's look at the @True@ alternative in the case on @p x@. The
+current contstraints we have from casing is that $@ys@ = @x:xs@$,
+and $@p x@ = @True@$. We have two case scrutinees behind us, so
+we also have a ``min set'' consisting of @ys@ and @p x@.
+
+Let's translate the @filter@ contract, with skolem constants for
+$p$ and $ys$:
+
+\[\begin{array}{rl}
+      & (min(p) => (\forall x . min(app(p,x)) => @CF@(app(p,x)))) \\
+\land & (min(ys) => @CF@(ys)) \\
+\land & (min(@filter'@(p,ys)) \land \neg @CF@(@filter'@(p,ys)))
+\end{array}\]
+
+We add the constraints and the min set-too:
+
+$$ys = x@:@xs \land app(p,x) = @True@ \land min(ys) \land min(app(p,x)) $$
+
+The benefit now is that we do not need to add the \emph{entire}
+definition of @filter@ to the theory, but only this branch:
+
+\[\begin{array}{rl}
+\forall \; p \; x \; xs . & min(@filter'@(p,x@:@xs)) \land app(p,x) = @True@ => \\
+                          & @filter'@(p,x@:@xs) = x @:@ @filter_rec@(p,xs)
+\end{array}\]
+
+To sum up, when we translate a declaration, for each alternative we
+record the ``min set'' of expressions cased on, the collected
+constraints, and of course the right hand side. When we then translate
+a contract, we translate the constraints with the skolemised variables
+in the contract, and add $min$ of everything in the ``min-set''.
