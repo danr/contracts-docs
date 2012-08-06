@@ -94,8 +94,8 @@ $$@id2@(@Nothing@) = @BAD@$$
 Our system is built upon untyped arguments should go to @UNR@!  The
 example above was after all written in Haskell rather than i GHC Core.
 Then, does it occur in the GHC Core at all? \emph{Yes,} non-trivial
-pattern-matches can actually be actually translated to casing on the
-same variable several times. One simple example is this @or@ function:
+pattern-matches can actually be translated to casing on the same
+variable several times. One simple example is this @or@ function:
 
 \begin{code}
     or :: Bool -> Bool -> Bool
@@ -123,11 +123,9 @@ it cases on @x@ twice, and throws @BAD@ on an untyped argument.  These
 examples seems to suggest that the problem is local: that is, it's a
 problem that we try to translate many cases in one go, and we should
 instead transform the program so there is only one top level case at
-each function. But alas, no, this is not the situation at
-hand.
-
-We revisit the @id2@ example, and
-lift out the inner case
+each function. Unfortunately so, the problem appears across
+defininiots as well. We revisit the @id2@ example, and lift out the
+inner case
 \footnote{This is written in in source Haskell, and with a data type
   with a a few more constructors than two, this function will have
   default branches analogous to above, even with core optimisations.
@@ -146,17 +144,16 @@ lift out the inner case
 
 By inserting @UNR -> UNR@ branches, we still get with an ill-typed
 argument @x@, we have $@id x@ = @error "Unreachable!"@ = @BAD@$.
-Unfortunately, this means that the obvious way to translate default
-patterns is unsound in our system, and we have not found any
-alternative ways to translate it sound and efficient.
+Unfortunately, we have to conclude that the obvious way to translate
+default patterns is unsound in our system, and futhermore, we have not
+found any alternative ways to translate it sound and efficient.
 
 However, there is still a lot of light in the tunnel. What we do
-instead is simply ``unrolling'' the default branches.
-If we have a branch @DEFAULT -> rhs@, then for each constructor @K@
-that is not mentioned in the case, we insert a @K -> rhs@
-branch. While this might sound devastating and leads to case
-explosion, it turns out that for instance @z3@ is still very efficient
-with this translation.
+instead is to simply ``unroll'' the default branches.  If we have a
+branch @DEFAULT -> rhs@, then for each constructor @K@ that is not
+mentioned in the case, we insert a @K -> rhs@ branch. While this might
+sound devastating it turns out that for instance @z3@ is still very
+efficient when there is a case explosion.
 
 
 
