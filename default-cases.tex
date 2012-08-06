@@ -132,18 +132,18 @@ inner case
 }:
 
 \begin{code}
-    id x = case x of
-        True -> True
-        _    -> id' x
-
-    {-# NOINLINE id2 #-}
     id2 x = case x of
+        True -> True
+        _    -> id2' x
+
+    {-# NOINLINE id2' #-}
+    id2' x = case x of
         False -> False
         _     -> error "Unreachable!"
 \end{code}
 
 By inserting @UNR -> UNR@ branches, we still get with an ill-typed
-argument @x@, we have $@id x@ = @error "Unreachable!"@ = @BAD@$.
+argument @x@, we have $@id2 x@ = @error "Unreachable!"@ = @BAD@$.
 Unfortunately, we have to conclude that the obvious way to translate
 default patterns is unsound in our system, and futhermore, we have not
 found any alternative ways to translate it sound and efficient.
