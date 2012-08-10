@@ -1,0 +1,156 @@
+
+By using the min translation, we enable the possibility for finite
+models.  When a contract does not hold under some assumed other
+contracts or the induction hypothesis, the theory is satisfiable. When
+using the min translation this means we have good chances for finding
+a finite countermodel. While we do not have a formal proof for this,
+or for the limitiations, practical experience shows that the finite
+model finder @paradox@ is very efficient on our problem.
+
+A finite model has some finite domain of elements that we can write
+$\mathbf{D} = \{\mathbf{1} , \mathbf{2} , \cdots , \mathbf{n}\}$ for a
+domain of $n$ elements. We also have an interpretation for every
+function and predicate in the theory. Or predicates are @min@ and
+@CF@, but we have many uses for FOL functions (and constants), namely,
+they correspond to:
+
+\begin{itemize}
+    \item Original functions a from the GHC Core
+    \item Constructor
+    \item Projections
+    \item Pointers
+    \item Skolem variables from translated contracts
+    \item The @app@ table
+\end{itemize}
+
+We consider a subtraction example:
+
+\begin{code}
+    (-) :: Nat -> Nat -> Nat
+    x      - Zero   = x
+    Zero   - _      = error "Negative Nat!"
+    Succ x - Succ y = x - y
+\end{code}
+
+Let's explore the counterexample we get with this contract:
+$$@(-)@ \in \{ @CF@ -> @CF@ -> @CF@ \}$$
+
+Two skolem constants, @x@ and @y@ are introduced for the first and
+second argument respectively, for @(-)@.  Running @paradox@ on the
+translated file with fixed point induction gives us a five element
+countermodel. The relevant entries for the constants are:
+
+\[\begin{array}{rcl}
+@x@ & = & \mathbf{3} \\
+@y@ & = & \mathbf{4}
+\end{array}\]
+
+How can we know what these elements $\mathbf{3}$ and $\mathbf{4}$ are?
+A first glance at the entry for @min@ shows that $\mathbf{2}$ and
+$\mathbf{5}$ are the only non-min values, so we ought to find some
+constructor that correspond to $\mathbf{3}$ and $\mathbf{4}$. The
+constructor tables for BAD, UNR, Zero and Succ look like this:
+
+\[\begin{array}{lcl}
+@BAD@ & = & \mathbf{1} \\
+@UNR@ & = & \mathbf{2} \\
+\\
+@Zero@ & = & \mathbf{3} \\
+\\
+@Succ@(\mathbf{1}) & = & \mathbf{5} \\
+@Succ@(\mathbf{2}) & = & \mathbf{2} \\
+@Succ@(\mathbf{3}) & = & \mathbf{4} \\
+@Succ@(\mathbf{4}) & = & \mathbf{5} \\
+@Succ@(\mathbf{5}) & = & \mathbf{5} \\
+\end{array}\]
+
+Interesting! It seems like $@x@ = @Zero@$ and $@y@ = @Succ @\mathbf{3}$.
+Futhermore, @UNR@ is $\mathbf{2}$, which was not in the @min@-set, so
+we haven't ever started evaluating it (phew!). Notice, too, that @x@
+and @y@ are not @BAD@. But let's have a look at the table for
+@Succ@. There are two elements, $\mathbf{2}$ and $\mathbf{3}$, that go
+to $\mathbf{2}$ - can then this element be @Succ@ of two different
+things? Naturally not, the missing piece is the projection table
+(recall that constructors are not everywhere injective when we do not
+have min). Here it is for @Succ@:
+\[\begin{array}{lcl}
+@Succ@_0(\mathbf{1}) & = & \mathbf{3} \\
+@Succ@_0(\mathbf{2}) & = & \mathbf{3} \\
+@Succ@_0(\mathbf{3}) & = & \mathbf{2} \\
+@Succ@_0(\mathbf{4}) & = & \mathbf{3} \\
+@Succ@_0(\mathbf{5}) & = & \mathbf{5} \\
+\end{array}\]
+
+Now we need to match up this table with the one for $@Succ@$. We
+search for elements $x$ with $@Succ@_0(@Succ@(x)) = x$. Those
+elements are the only we can say are really constructed with $@Succ@$.
+Let's put this in a little table for our five elements:
+\[\begin{array}{ccc}
+x          & @Succ@(x)  & @Succ@_0(@Succ@(x)) \\
+\mathbf{1} & \mathbf{5} & \mathbf{5} \\
+\mathbf{2} & \mathbf{2} & \mathbf{3} \\
+\mathbf{3} & \mathbf{4} & \mathbf{3} \\
+\mathbf{4} & \mathbf{5} & \mathbf{5} \\
+\mathbf{5} & \mathbf{5} & \mathbf{5} \\
+\end{array}\]
+
+In the example at hand, we get these two: $\mathbf{5} = @Succ@(\mathbf{5})$
+and $\mathbf{3} = @Succ@(\mathbf{4})$. The latter is indeed @y@, and
+we have that $@y@ = @Succ@(\mathbf{4}) = @Succ Zero@$, since
+$\mathbf{4}$ is @Zero@, as seen above.
+
+And that is our counterexample - the contract breaks by running
+@Zero - Succ Zero@. In general, we can find representatives of
+skolem variables with concrete types by this algorithm:
+
+\paragraph{Finding representative constructors}
+For each domain element $\mathbf{d}$, this is the procedure to see
+which constructors it is equal to.  For a constructor @K@ with
+arguments $\mathbf{d_1} \, \cdots \, \mathbf{d_n}$, check in the
+tables for @K@, @K_1@, \ldots, @K_n@ if
+
+\[\begin{array}{lcl}
+@K@(\mathbf{d_1},\cdots,\mathbf{d_n}) & = & \mathbf{d}   \\
+@K@_1(\mathbf{d})                    & = & \mathbf{d_1} \\
+@K@_n(\mathbf{d})                    & = & \mathbf{d_n} \\
+\end{array}\]
+
+Then we know that $\mathbf{d} = @K @\mathbf{d_1} \, \cdots \, \mathbf{d_n}$.
+After all such $\mathbf{d}$ has been determined, constructors and
+projections functions are not needed any more.
+
+\subsection{Types}
+
+In the discussion with the subtraction example above, we did not
+consider the types of elements - and while there were @Bool@s in the
+theory, I did not say anything about them. But it turns out that our
+element for @x@, namely $\mathbf{3}$, is also equal to @True@!  This
+behaviour - indeed a bit weird at a first glance - is actually
+expected since never add any axioms saying that constructors of
+different types are unequal - such that $@True@ \neq @Zero@$. This is
+deliberate - we will never need to tell these two values apart in a
+proof.
+
+So, when printing the values of skolem variables we need to consider
+their type.  When printing a skolem variable $x$ in a type $\tau$,
+we will only consider constructors of the correct type:
+
+\[\begin{array}{rcl}
+\mathsf{show}_{\tau}(x)
+    & = & \{ @C@ \, (\mathsf{show}_{\tau_1}(x_1)) \, \cdots \, (\mathsf{show}_{\tau_n}(x_n)) \\
+    &   & \mid @C@ : \tau_1 -> \cdots -> \tau_n -> \tau_r \\
+    &   & , x = @C@ \, x_1 \, \cdots \, x_n \\
+    &   & , \exists \sigma . \sigma\tau_r = \tau \} \\
+\end{array}\]
+
+The base case is nullary constructors, or to use another skolem
+variable of the right type (but we should avoid printing @x@ = @x@).
+The $\sigma$ is a substitution and allows us to pick a more specific
+constructor, in particular, to allow us to use
+$@UNR@ : \forall \alpha . \alpha$ when, say, a @Bool@ is expected.
+
+If we cannot find a good representative for an element $\mathbf{d}$,
+it is printed as a metavariable as @?d@. Futhermore, if $\mathbf{d}$
+is not in the min set, it is simply written as $\cdots$.
+
+
