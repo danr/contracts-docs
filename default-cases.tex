@@ -107,7 +107,7 @@ variable several times. One simple example is this @or@ function:
 After desugaring, we get this code in (prettified) Core:
 
 \begin{code}
-or :: Bool -> Bool -> Ok
+or :: Bool -> Bool -> Bool
 or = \ (x :: Bool) (y :: Bool) ->
     case x of {
         True -> True
@@ -154,9 +154,3 @@ branch @DEFAULT -> rhs@, then for each constructor @K@ that is not
 mentioned in the case, we insert a @K -> rhs@ branch. While this might
 sound devastating it turns out that for instance @z3@ is still very
 efficient when there is a case explosion.
-
-
-
-
-
-

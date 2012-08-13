@@ -61,9 +61,9 @@ theorem provers.
 A function that is neither recursive nor using case is a good
 candidate for removal.
 
-We such top-level lifted CAFs for sharing, but we should
-try to destroy all sharing since everything is memoized in
-theorem provers anyway. So we don't want to see:
+Such CAFs are lifted for sharing, but we should try to destroy all
+sharing since everything is memoized in theorem provers anyway. So we
+don't want to see:
 
 \begin{code}
 zero = Zero
@@ -71,6 +71,8 @@ one = Succ zero
 two = Succ one
 \end{code}
 
-Such things should always be inlined to not introduce new constants.
-For instance, @eprover@ is sometimes confused by such constants.
-
+Such things should always be inlined to not introduce new constants -
+so whenever @two@ is found in the GHC Core, it's replaced with
+@Succ (Succ Zero)@.
+There are examples where for instance @eprover@ behaves a lot slower
+when this inlining is not done.

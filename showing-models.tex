@@ -68,11 +68,11 @@ Interesting! It seems like $@x@ = @Zero@$ and $@y@ = @Succ @\mathbf{3}$.
 Futhermore, @UNR@ is $\mathbf{2}$, which was not in the @min@-set, so
 we haven't ever started evaluating it (phew!). Notice, too, that @x@
 and @y@ are not @BAD@. But let's have a look at the table for
-@Succ@. There are two elements, $\mathbf{2}$ and $\mathbf{3}$, that go
-to $\mathbf{2}$ - can then this element be @Succ@ of two different
-things? Naturally not, the missing piece is the projection table
-(recall that constructors are not everywhere injective when we do not
-have min). Here it is for @Succ@:
+@Succ@. There are three elements, $\mathbf{1}$, $\mathbf{4}$ and
+$\mathbf{5}$, that go to $\mathbf{2}$ - can then this element be
+@Succ@ of two different things? Naturally not, the missing piece is
+the projection table (recall that constructors are not everywhere
+injective when we do not have min). Here it is for @Succ@:
 \[\begin{array}{lcl}
 @Succ@_0(\mathbf{1}) & = & \mathbf{3} \\
 @Succ@_0(\mathbf{2}) & = & \mathbf{3} \\
@@ -152,5 +152,3 @@ $@UNR@ : \forall \alpha . \alpha$ when, say, a @Bool@ is expected.
 If we cannot find a good representative for an element $\mathbf{d}$,
 it is printed as a metavariable as @?d@. Futhermore, if $\mathbf{d}$
 is not in the min set, it is simply written as $\cdots$.
-
-
