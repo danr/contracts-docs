@@ -71,3 +71,166 @@ record the ``min set'' of expressions cased on, the collected
 constraints, and of course the right hand side. When we then translate
 a contract, we translate the constraints with the skolemised variables
 in the contract, and add $min$ of everything in the ``min-set''.
+
+\subsection{Nested case translation through constraints}
+
+The implementation supports translating nested cases, if they all are
+on the top level, so the second @case@ in @filter@ is OK:
+
+\begin{code}
+    filter = \p ys -> case ys of
+        (:) x xs -> case p x of
+            True -> (:) x (filter p xs)
+            False -> filter p xs
+        [] -> []
+\end{code}
+
+While the case here is not:
+\begin{code}
+    filterSwitch = \b p q xs ->
+                 filter (case b of
+                             True -> p
+                             False -> q) xs
+\end{code}
+
+The ``inner'' case will get lifted out to an own definition.
+
+Formally, the rules for translating nested cases is presented in
+Figure~\ref{fig:nested-case-trans}. The different arguments to
+$\mathcal{U}$ are the quantified variables $\ol{q}$, the constraints
+$\ol{c}$, and what function we are defining $s$, plus the current
+expression $u$.  Constraints are either equalities from matching a
+scrutinee to an expression, or an inequality coming from the @UNR@
+``branch''.
+
+One possible optimisation is that when the scrutinee
+expression is a variable rather than an expression, it can be
+substituted in the quantified variables, the constraints and the given
+expression. This is what is implemented, but it can be toggled off
+with the flag @--var-scrut-constr@. Another relevant option is
+@--case-lift-inner@, which makes all nested cases
+depth two or greated can be forced to be lifted to the top level,
+making the translation equal to what is written in
+Figure~\ref{fig:etrans}.
+
+\newcommand{\ut}[4]{{\cal U}^{#1}_{#2}(#3)\{\!\!\{#4\}\!\!\}}
+
+\begin{figure}\small
+\setlength{\arraycolsep}{2pt}
+\[\begin{array}{c}
+\ruleform{\dtrans{\Sigma}{d} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+  \dtrans{\Sigma}{f \;\ol{x}\; = u}
+    & = & \ut{\ol{x}}{\epsilon}{f(\ol{x})}{u} \\
+\end{array} \\
+\mbox{{\footnotesize (pointer axiom omitted)}}
+\\ \\
+\ruleform{\ut{\ol{q}}{\ol{c}}{s}{u} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\ut{\ol{q}}{\ol{c}}{s}{e}
+  & = & \formula{\forall \ol{q} @.@
+    (min(s) \land \ol{c} \land s = \etrans{\Sigma}{\Gamma}{e})} \\
+\multicolumn{3}{l}{\ut{\ol{q}}{\ol{c}}{s}
+    {@case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}}} \\
+\multicolumn{3}{l}{
+\quad
+  \begin{array}[t]{rl}
+    = & \formula{\ut{\ol{x} \smallsmile \ol{y}}{(t = K_1(\ol{y})) , \ol{c}}{s}{e'_1}} \land \ldots  \\
+    \land & \formula{ \ut{\ol{x}}{(t \neq K_1(\oln{{\sel{K_1}{i}}(t)}{}) , \ldots \smallsmile \ol{c}}{s}{@UNR@} } \\
+    \land & \formula{min(s) => min(t)} \\
+    \mbox{where} & t  =  \etrans{\Sigma}{\Gamma}{e}
+ \end{array}
+}
+\end{array}
+\end{array}\]
+\caption{Nested case translation of programs.
+For simplicity, every case is assumed to have a $\mathtt{BAD} -> \mathtt{BAD}$ branch.
+\label{fig:nested-case-trans}
+}
+\end{figure}
+
+\subsection{Avoiding nested quantifiers in contract translations}
+
+Given a contract $f \notin (x_1 : C_1) -> \ldots -> (x_n : C_n) -> C$ to translate,
+we can can translate it as this:
+
+$$\exists x_1 @.@ \ctrans{}{}{x_1 \in C_1} \land \cdots \land
+  \exists x_n @.@ \ctrans{}{}{x_n \in C_n} \land
+                  \ctrans{}{}{f \, x_1 \, \ldots \, x_n \notin C}
+$$
+
+However, we can pull the quantifiers to the top level:
+
+$$\exists x_1 \; \ldots \; x_n
+          @.@ \ctrans{}{}{x_1 \in C_1} \land \cdots \land
+ %             \ctrans{}{}{x_n \in C_n} \land
+              \ctrans{}{}{e \, x_1 \, \ldots \, x_n \notin C}
+$$
+
+Now, because this is on the top level of a translated contract,
+$x_1 \ldots x_n$ can be skolemised. Futhermore, this is a conjunction,
+so we can put the formulae in different clauses, aiding the theorem provers
+(this can be tested with @--no-skolemisation@ and @--no-pull-quants@).
+
+\subsection{Translating split goals}
+
+\newcommand{\ud}[4]{{\dot\mathcal{U}}^{#1}_{#2}(#3)\{\!\!\{#4\}\!\!\}}
+
+Again, we assume that we have a contract
+$f \notin (x_1 : C_1) -> \ldots -> (x_n : C_n) -> C$.
+Let's change the translation for this function: the idea is to make a
+theory for every branch of the cases for a function @f@ we want to
+prove a contract for.  The new translation will be called
+$\dot\mathcal{U}$.  This function will now return a set of clauses:
+let us call the translation of the theory without $f$, and the
+contract (using $x_1 \; \ldots \; x_n$ as skolem variables), besides
+$f$, for $\mathcal{T}$. For every set of clauses
+$A \in \ud{\epsilon}{\epsilon}{f(x_1,\ldots,x_n)}{u}$, we will query a theorem prover if
+$\mathcal{T} \cup A$ is unsatisfiable.
+
+Instead of putting matches in constraints as conditionals, we put them
+in a positive position for every theory. But we need to keep track of
+everything scrutineed upon, so we make a new argument, the
+``min~set''. However, the quantified variables will now be skolemised,
+so they are not needed any more.
+
+The precise rules for $\dot\mathcal{U}$ are given in
+\ref{fig:nested-case-trans}. It also gives a way to recursively
+go down in functions that $f$ calls. We can limit the times it is entered
+by not revisiting any function twice (in particular not $f$), or limit
+the depth or the width of the generated functions.
+
+\begin{figure}\small
+\setlength{\arraycolsep}{2pt}
+\[\begin{array}{c}
+\ruleform{\ut{\ol{m}}{\ol{c}}{s}{u} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\ud{\ol{m}}{\ol{c}}{s}{e}
+  & = & \formula{\{ \ol{min(m)} \land \ol{c} \land s = \etrans{\Sigma}{\Gamma}{e}) \}}  \\
+\multicolumn{3}{l}{\ud{\ol{m}}{\ol{c}}{s}
+    {@case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}}} \\
+\multicolumn{3}{l}{
+\quad
+  \begin{array}[t]{rl}
+    =    & \formula{\ud{t, \ol{m}}{(t = K_1(\ol{y})) , \ol{c}}{s}{e'_1}} \cup \ldots  \\
+    \cup & \formula{\ud{t, \ol{m}}{(t \neq K_1(\oln{{\sel{K_1}{i}}(t)}{}) , \ldots \smallsmile \ol{c}}{s}{@UNR@} } \\
+    \mbox{where} & t  =  \etrans{\Sigma}{\Gamma}{e}
+ \end{array}
+}
+\end{array}
+\\ \\
+\ruleform{\text{Recursive base case:}}
+\\ \\
+\begin{array}{rcl}
+e & = & f \, e_1 \, \ldots e_n \\
+f & = & \lambda y_1 \ldots y_n @.@ e' \\
+\ud{\ol{m}}{\ol{c}}{s}{e} & = & \ud{\ol{m}}{\ol{c}}{s}{e'[e_1/y_1,\ldots]}
+\end{array}
+\end{array}\]
+\caption{
+Translation that creates several theories for a contract for a given function.
+The number of times the recursive base case should be taken can limited by either some number or that
+it never revisits a function. \dr{and it is not yet implemented}
+\label{fig:nested-case-trans}
+}
+\end{figure}
