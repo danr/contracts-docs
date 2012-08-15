@@ -1,9 +1,7 @@
 
-\dr{This is a bit confusing since for fixed point induction calls
-    we can actually do better (since none calls fixed point
-    functions), so we could introduce this without talking about
-    induction and that this principle works iteratively.
-    It might also help if I wrote down the rules I use to translate}
+\dr{First a small introduction, then the technique is put it more formally.
+    This section also introduces the exact way I translate functions, and
+    how contracts are skolemised.}
 
 We can make things a lot easier for the theorem provers by giving them
 smaller theories to consider, and sometimes really trimming down the
@@ -199,6 +197,12 @@ The precise rules for $\dot\mathcal{U}$ are given in
 go down in functions that $f$ calls. We can limit the times it is entered
 by not revisiting any function twice (in particular not $f$), or limit
 the depth or the width of the generated functions.
+
+\dr{As a side note, since $\mathcal{U}$ and $\dot\mathcal{U}$ are so similar,
+       they share the same code (in @halo/src/Halo/Binds.hs@ and
+       @src/Contracts/@ @Trans.hs@). Even more of a side note, the expression
+       translator $\etrans{}{}{e}$ is in @halo/src/Halo/ExprTrans.hs@.
+   }
 
 \begin{figure}\small
 \setlength{\arraycolsep}{2pt}
