@@ -25,9 +25,9 @@ might look like this in the optimised GHC core:
 \begin{code}
 map_cf = (:::) map a3_rke
 
-a3_rke = (-->) a3_rp7 CF
+a3_rke = (-->) a3_rp7 a3_rzt
 
-a3_rp7 = (-->) a3_rzt a3_rke
+a3_rp7 = (-->) CF CF
 
 a3_rzt = (-->) CF CF
 \end{code}
