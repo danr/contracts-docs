@@ -204,6 +204,23 @@ the depth or the width of the generated functions.
        translator $\etrans{}{}{e}$ is in @halo/src/Halo/ExprTrans.hs@.
    }
 
+\paragraph{Caveat} If the contract for a function $f$ does mention the function
+in a predicate or an assumption, then we must add the whole definition anyway.
+Consider a contract for symmetry
+%\footnote{\verb!eq_sym_boolean2_ = (==) ::: CF :-> \x -> CF :-> \y -> CF :&: Pred ((y == x) <=>)@!}:
+
+$$
+    @(==)@ \in \{ @x@ \mid @CF@ \} -> \{ @y@ \mid @CF@ \}
+            -> \{ @r@ \mid @CF@ \& @(y == x) <=> r@ \}
+$$
+
+For two different constructors @C@ and @D@, we cannot only add the
+definition for @C == D@, because the definition for @D == C@ is
+crucial too.
+
+If the function is mentioned elsewhere in the contract, the full
+definition is added as well.
+
 \begin{figure}\small
 \setlength{\arraycolsep}{2pt}
 \[\begin{array}{c}
