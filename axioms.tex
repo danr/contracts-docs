@@ -1,0 +1,164 @@
+
+\begin{figure}
+{\small
+\[\setlength{\arraycolsep}{1pt}
+\begin{array}{c}
+\ruleform{\ThMin} \\ \\
+\begin{array}{lll}
+ \multicolumn{2}{c}{\mbox{Defined in @src/Contracts/Axioms.hs@}:} \\
+ \textsc{AxCfBU}    & \formula{\lcf{\unr} /\ \lncf{\bad}} \\
+ \textsc{AxDisjBU}  & \formula{\bad \neq \unr} \\
+ \textsc{AxAppBad}  & \formula{\forall x @.@ app(\bad,x) = \bad} \\
+ \textsc{AxAppUnr}  & \formula{\forall x @.@ app(\unr,x) = \unr} \\
+
+ \textsc{AxCfMin} & \formula{\forall x @.@ (\lcf{x} /\ x \neq unr) => min(x)} \\
+ %% \textsc{AxCfB1}   & \formula{\forall \oln{x}{n} @.@ \bigwedge_i (\lcf{x_i}\lor \neg(min(x_i))} => \lcf{K(\ol{x})} \lor \neg(min(K(\ol{x}))) \\
+ %%                   & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+ \\
+                 & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma : \\
+ \textsc{AxCfC1} & \formula{\highlight{\forall \oln{x}{n} @.@ \bigwedge \lcf{K(\ol{x})} => \lcf{\ol{x}}}} \\
+                 & \text{ wasn't written down but implemeted a long time ago } \\
+ \textsc{AxCfC2} & \formula{min(K(\oln{x}{n}))\land\neg\lcf{K(\oln{x}{n})}} \\
+                 & \formula{\quad\qquad\qquad  => \bigvee_i (min(x_i)\land\neg\lcf{x_i})} \\
+ \textsc{---}    & \text{ used to be an axiom } \formula{\forall \oln{x}{n} @.@ \bigwedge\lcf{\ol{x}} => \lcf{K(\ol{x})}} \\
+                 & \text{ but it is implied by } \textsc{AxCfC2} \\
+
+ \\
+ \multicolumn{2}{c}{\mbox{With flag \highlight{@--min-or-unr@}}:} \\
+ \textsc{AxNotMinUNR} & \formula{\forall x @.@ min(x) \lor x = \unr} \\
+
+ \\
+ \multicolumn{2}{c}{\mbox{Defined in @halo/src/Halo/BackgroundTheory.hs@}:} \\
+ \textsc{AxDisjC} & \formula{\forall \oln{x}{n}\oln{y}{m} @.@}\highlight{min(K(\ol{x}))\;\land\;min(J(\ol{y}))}  \\
+                  & \formula{\;\;=> K(\ol{x}){\neq}J(\ol{y})} \\
+                  & \text{$\quad$\highlight{@--or-discr@} makes this $\highlight{\cdots \lor \cdots => \cdots}$} \\
+                  & \text{ for every } (J, K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+%                  & \text{ and } (J{:}\forall\as @.@ \oln{\tau}{m} -> S\;\as) \in \Sigma \\
+ \textsc{AxDisjCU} & \formula{\forall \oln{x}{n} @.@ min(K(\ol{x})) => K(\ol{x}) \neq unr} \\
+ \textsc{AxDisjCB} & \formula{\forall \oln{x}{n} @.@ \highlight{min(K(\ol{x}))} => K(\ol{x}) \neq \bad} \\
+                   & \text{$\highlight{min}$ was missing}\\ \\
+ \textsc{AxInj}   & \formula{\forall \oln{y}{n} @.@ \highlight{min(K(\ys)) /\ min(y_i)}} \\
+                  & \formula{\quad\qquad\qquad => \sel{K}{i}(K(\ys)) = y_i} \\
+                  & \text{for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \text{ and } i \in 1..n  \\ \\
+                  & \text{used to say $\highlight{min(\sel{K}{i}(K(\ys))) => \cdots}$} \\
+                  & \text{I guess $\highlight{min(y_i)}$ can be dropped} \\
+ \textsc{AxAppMin}& \formula{\forall f \; x @.@ min(app(f,x)) => min(f)} \\ \\
+
+ \multicolumn{2}{c}{\mbox{Defined in @halo/src/Halo/Pointer.hs@}:} \\
+ \textsc{AxPtr}  & \formula{\forall \oln{x}{n} @.@ \highlight{min(app(f_{ptr},\xs)) \lor min(f(\ol{x}))}} \\
+                 & \formula{\quad\qquad\qquad => f(\ol{x}) = app(f_{ptr},\xs)} \\
+                 & \text{ for every } (f |-> \Lambda\as @.@ \lambda\oln{x{:}\tau}{n} @.@ u) \in P \\
+                 & \text{ and for every } (f{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+                 & \text{ used to be without $\highlight{min(f(\ol{x}))}$ } \\ \\
+\end{array}
+%% \ruleform{\Th_\lcfZ^{min}} \\ \\
+%% \begin{array}{lll}
+%%  \textsc{AxCfBU}  & \formula{\lcf{\unr} /\ \lncf{\bad}} \\
+%%  \textsc{AxCfMin} & \formula{\highlight{\forall x @.@ \lcf{x} => min(x) \lor x = unr}} \\
+%%  %% \textsc{AxCfB1}   & \formula{\forall \oln{x}{n} @.@ \bigwedge_i (\lcf{x_i}\lor \neg(min(x_i))} => \lcf{K(\ol{x})} \lor \neg(min(K(\ol{x}))) \\
+%%  %%                   & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+%%  \textsc{AxCfC1} & \formula{\forall \oln{x}{n} @.@ \bigwedge\lcf{\ol{x}}} => \lcf{K(\ol{x})} \\
+%%                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+%%  \textsc{AxCfC2} & \formula{\highlight{min(K(\oln{x}{n}))\land\neg\lcf{K(\oln{x}{n})}}} \\
+%%                  & \formula{\quad\qquad\qquad \highlight{ => \bigvee_i (min(x_i)\land\neg\lcf{x_i})}}
+%% \end{array}
+\end{array}\]}
+\caption{The implemented theory with minimisation}\label{fig:min-theory}
+\end{figure}
+
+\begin{figure}
+\[\begin{array}{c}
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Statements}} \\
+  s,t & ::=  & e \in C                    & \text{Contracts} \\
+      & \mid & s => t                     & \text{Assumption} \\
+      & \mid & \forall x @.@ s            & \text{Quantification} \\
+      & \mid & s \; \textsf{using} \; t   & \text{Reuse}
+\end{array}
+\end{array}\]
+\caption{Syntax of Statements}\label{fig:fol-image}
+\end{figure}
+
+\newcommand{\trc}[1]{{\cal C}\{\!\!\{#1\}\!\!\}}
+\newcommand{\trcl}[1]{{\cal C}\{\!\!\{#1}
+\newcommand{\trcr}[1]{#1\}\!\!\}}
+\newcommand{\trs}[2]{{\cal S}^{#1}\{\!\!\{#2\}\!\!\}}
+
+\begin{figure}\small
+\setlength{\arraycolsep}{2pt}
+\[\begin{array}{c}
+\mbox{Defined in @src/Contracts/Trans.hs@:} \\ \\
+\mbox{Function @trStmt@:} \\ \\
+\ruleform{\trs{v}{e} = \formula{\phi}} \\ \\
+\begin{array}{lcl}
+  \trs{-}{e \in C}         & = & \trc{e \notin C} \\
+  \trs{+}{e \in C}         & = & \trc{e \in C} \\
+  \trs{-}{\forall x @.@ s} & = & \exists x @.@ \trs{-}{s} \\
+  \trs{+}{\forall x @.@ s} & = & \forall x @.@ \trs{+}{s} \\
+  \trs{-}{s => t}          & = & \trs{+}{s} \land \trs{-}{t} \\
+  \trs{+}{s => t}          & = & \trs{-}{s} \lor \trs{+}{t} \\
+  \trs{-}{s \; \textsf{using} \; t} & = & \trs{-}{s} \land \trs{+}{t} \\
+  \trs{+}{s \; \textsf{using} \; t} & = & \trs{+}{s} \\
+\end{array} \\ \\
+
+\mbox{Function @trContract@:} \\ \\
+\ruleform{\trc{e \notin \Ct} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\trc{e \notin \{(x{:}\tau) \mid e' \}}
+  & = & \highlight{min(t) \land min(t'[t/x])} \\
+  & \land & t \neq \unr
+    \; \land \; (t'[t/x] {=} \bad \; \lor \; t'[t/x] {=} \False ) \\
+ \mbox{where} &  &
+    \begin{array}[t]{lcl}
+      t  & = & \etrans{\Sigma}{\Gamma}{e} \\
+      t' & = & \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\multicolumn{3}{l}{\trc{e \notin (x_1{:}\Ct_1) -> \cdots -> (x_n{:}\Ct_n) -> \Ct}} \\
+  & = & \formula{\exists x_1 \cdots x_n @.@} \\
+  &   & \formula{\qquad\trc{x_1 \in \Ct_1} \land \cdots \land \trc{x_n \in \Ct_n} \land} \\
+  &   & \formula{\qquad\trc{e\;x_1 \cdots x_n \notin \Ct}}
+\\
+\multicolumn{3}{l}{\qquad\text{or, using \highlight{@--no-pull-quants@}:}} \\
+\trc{e \notin (x{:}\Ct_1) -> \Ct_2}
+  & = & \formula{\exists x @.@ \trc{x \in \Ct_1}
+                          \land \trc{e\;x \notin \Ct_2}}
+\\
+\trc{e \notin \Ct_1 \& \Ct_2}
+   & = & \formula{ \trc{e \notin \Ct_1} \lor
+                   \trc{e \notin \Ct_2}}
+\\
+\trc{e \notin \CF} & = & \formula{\highlight{min(\etrans{}{}{e})} \land
+                                               \neg\lcf{\etrans{\Sigma}{\Gamma}{e}}} \\
+\end{array} \\ \\
+\ruleform{\trc{e \in \Ct} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\trc{e \in \{(x{:}\tau) \mid e' \}}
+  & = & \highlight{min(t) \land min(t'[t/x])} \\
+  & \lor & t {=} \unr
+    \; \lor \; t'[t/x] {=} \unr
+    \; \lor \; t'[t/x] {=} \True \\
+ \mbox{where}  &  &
+    \begin{array}[t]{lcl}
+      t  & = & \etrans{\Sigma}{\Gamma}{e} \\
+      t' & = & \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\multicolumn{3}{l}{\trc{e \in (x_1{:}\Ct_1) -> \cdots -> (x_n{:}\Ct_n) -> \Ct}} \\
+  & = & \formula{\forall x_1 \cdots x_n @.@ \highlight{min(e\;x_1 \cdots x_n)}} \\
+  &   & \formula{\qquad =>       \trc{x_1 \notin \Ct_1} \lor \cdots \lor \trc{x_n \notin \Ct_n}} \\
+  &   & \formula{\qquad \,\lor\;\, \trc{e\;x_1 \cdots x_n \in \Ct}}
+\\
+\multicolumn{3}{l}{\qquad\text{or, using \highlight{@--no-pull-quants@}:}} \\
+\trc{e \in (x{:}\Ct_1) -> \Ct_2}
+  & = & \formula{\forall x @.@ \highlight{min(e\;x)} } \\
+  &   & \formula{\quad\qquad => \trc{x \notin \Ct_1} \lor \trc{e\;x \in \Ct_2}}
+\\
+\trc{e \in \Ct_1 \& \Ct_2}
+   & = & \formula{ \trc{e \in \Ct_1} /\ \trc{e \in \Ct_2}}
+\\
+\trc{e \in \CF} & = & \formula{\lcf{\etrans{\Sigma}{\Gamma}{e}}} \\
+\end{array}
+\end{array}\]
+\caption{The implemented translation of statements and contracts with minimisation.}\label{fig:min-typing}
+\end{figure}
