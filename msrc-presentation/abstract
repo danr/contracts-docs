@@ -1,0 +1,19 @@
+
+
+Static Contract Checking for Haskell
+
+Even well-typed programs can go wrong, by encountering a pattern-match
+failure, or simply returning the wrong answer. One response is to
+allow programmers to write contracts that express semantic properties,
+such as crash-freedom or some useful post-condition.
+
+In my internship we have developed a tool for static verification of
+contracts.  The method is to translate Haskell programs and their
+contracts to first order logic and prove contracts using theorem
+provers. The translation is justified by denotational semantics.
+
+Should the contract not hold, understandably the user would like to
+see a counterexample.  We then use a modification of the translation
+that admits finite counter-models, that can be found by a model-based
+theorem prover can find.  This model is used to show counterexamples.
+
