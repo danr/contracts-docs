@@ -1,0 +1,603 @@
+\documentclass[serif,professionalfont]{beamer}
+
+\usepackage{code}
+
+\usepackage{tikz}
+\usetikzlibrary{shapes,arrows,calc}
+
+\usepackage{amssymb}
+
+\usepackage{hyperref}
+
+\usepackage{mathpartir}
+\usepackage{color}
+
+% Helvetica
+% \usepackage[scaled]{helvet}
+% \renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
+% \usepackage[T1]{fontenc}
+
+% Latin Modern Sans
+\usepackage{lmodern}
+\renewcommand*\familydefault{\sfdefault} %% Only if the base font of the document is to be sans serif
+\usepackage[T1]{fontenc}
+
+\usepackage{amsmath}
+\usepackage{array}
+\providecommand{\alert}[1]{\textbf{#1}}
+
+% \definecolor{Purpleee}{RGB}{140,20,140}
+% \definecolor{PurpleL}{RGB}{255,170,255}
+% \definecolor{MyGreen}{RGB}{5,95,5}
+% \setbeamercolor{title}{fg=Purpleee}
+% \setbeamercolor{frametitle}{fg=Purpleee}
+% \setbeamercolor{structure}{fg=Purpleee}
+
+
+\usepackage{listings}
+
+\lstnewenvironment{codex}[1][]%
+  {
+   \noindent
+   \minipage{\linewidth}
+   \vspace{0.2\baselineskip}
+%   \vspace{-0.4\baselineskip}
+   \lstset{basicstyle=\ttfamily,
+%           frame=single,
+           language=Haskell,
+           keywordstyle=\color{black},
+           #1}}
+  {%\vspace{-0.8\baselineskip}
+   \endminipage}
+
+\title{ {\huge Static Haskell Contract Checking} }
+\institute{ Microsoft Research }
+
+\author{ {\Large Dan Ros\'en}
+     \vspace{\baselineskip} \\
+     Dimitrios Vytiniotis, Koen Claessen, Simon Peyton Jones}
+\date{September 5, 2012}
+
+
+\begin{document}
+
+\maketitle
+\makeatactive
+
+\newcommand\cf[0]{\mathsf{CF}}
+\newcommand\conj[0]{\&}
+
+\begin{frame}[fragile]
+  \frametitle{Contracts}
+  \begin{verbatim}
+    head :: [a] -> a
+    head (x:xs) = x
+    head []     = error "head: empty list!"
+  \end{verbatim}
+
+  Some example contracts for @head@:
+
+  \[\begin{array}{l}
+    @head@ \in \cf \to \cf \\
+    @head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf \\
+    @head@ \in \cf \conj \{ @xs@ \mid @not (null xs)@ \} \to \cf
+  \end{array}\]
+
+  $\cf$ stands for Crash-Free
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Our Values}
+    \begin{center}
+    {\Large \center
+    $ \text{Haskell values} +
+        \underbrace{
+            \overbrace{@BAD@}^{\text{catchable errors}} +
+            \overbrace{@UNR@}^{\text{non-termination}}
+        }_{\bot}
+    $
+      }
+
+  \begin{verbatim}
+    head :: [a] -> a
+    head (x:xs) = x
+    head []     = BAD
+    head BAD    = BAD
+    head _       = UNR
+  \end{verbatim}
+
+  $\cf$ means a value recursively does not contain @BAD@ \\
+  (but it could contain @UNR@)
+    \end{center}
+
+\end{frame}
+
+\newcommand\cons[2]{\mathsf{cons}(#1,#2)}
+\newcommand\conspi[1]{\mathsf{cons_0}(#1)}
+\newcommand\conspii[1]{\mathsf{cons_1}(#1)}
+\newcommand\nil[0]{\mathsf{nil}}
+\newcommand\head[1]{\mathsf{head}(#1)}
+\newcommand\unr[0]{@UNR@}
+\newcommand\True[0]{@True@}
+\newcommand\False[0]{@False@}
+\newcommand\bad[0]{@BAD@}
+
+\begin{frame}[fragile]
+  \frametitle{Translating Data Types to FOL}
+
+  \begin{itemize}
+  \item Discrimination axioms
+
+  \[\begin{array}{ll}
+  \cons{x}{xs} \neq \nil, & \bad \neq \unr \\
+  \cons{x}{xs} \neq \bad, & \cons{x}{xs} \neq \unr, \\
+  \nil \neq \bad,         & \nil \neq \unr
+  \end{array}\]
+
+  \item Injectivity axioms
+
+  \[\begin{array}{lcl}
+    \conspi{\cons{x}{xs}} & = & x, \\
+    \conspii{\cons{x}{xs}} & = & xs
+  \end{array}\]
+
+  Now $\cons{x}{xs} = \cons{y}{ys} \to x = y$ (by $\mathsf{cons_0}$)
+
+  \item Crash-freeness
+
+  \[\begin{array}{lll}
+  \cf(\nil), & \cf(\unr), & \neg \cf(\bad), \\
+  \multicolumn{3}{l}{\cf(\cons{x}{xs}) \leftrightarrow (\cf(x) \land \cf(xs))}
+  \end{array}\]
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Translating Functions to FOL}
+
+  \begin{verbatim}
+    head :: [a] -> a
+    head (x:xs) = x
+    head []     = BAD
+    head BAD    = BAD
+    head _       = UNR
+  \end{verbatim}
+
+  \[\begin{array}{lll}
+  \head{\cons{x}{xs}} & = & x,    \\
+  \head{\nil}         & = & \bad, \\
+  \head{\bad}         & = & \bad, \\
+  \head{x}            & = & \unr \\
+  \multicolumn{3}{l}{\quad \lor \; \only<1>{(\exists \; y \; ys . x = \cons{y}{ys})}
+                                   \only<2>{x = \cons{\conspi{x}}{\conspii{x}}}} \\
+  \multicolumn{3}{l}{\quad \lor \; x = \nil} \\
+  \multicolumn{3}{l}{\quad \lor \; x = \bad}
+  \end{array}\]
+\end{frame}
+
+\newcommand\formula[1]{#1}
+\newcommand\highlight[1]{#1}
+\newcommand{\etrans}[3]{{\cal E}\{\!\!\{#3\}\!\!\}}
+\newcommand{\trc}[1]{{\cal C}\{\!\!\{#1\}\!\!\}}
+
+\begin{frame}[fragile]
+  \frametitle{Translating Contracts to FOL}
+\[\begin{array}{rcl}
+\trc{e \in \{x \mid p \}}
+  & = &      \etrans{}{}{e} {=} \unr \; \lor \; \\
+  &   &      \etrans{}{}{p}[\etrans{}{}{e}/x] {=} \unr \; \lor \; \\
+  &   &      \etrans{}{}{p}[\etrans{}{}{e}/x] {=} \True
+\\ \\
+\trc{e \in (x{:}C_1) \to C_2}
+  & = & \formula{\forall x @.@  \trc{x \in C_1} \to \trc{e\;x \in C_2}}
+\\ \\
+\trc{e \in C_1 \& C_2}
+   & = & \formula{ \trc{e \in C_1} \land \trc{e \in C_2}}
+\\ \\
+\trc{e \in \cf} & = & \formula{\cf({\etrans{\Sigma}{\Gamma}{e}})} \\
+\end{array}\]
+
+\begin{code}
+  contract_1 = head ::: Pred (not . null) --> CF
+\end{code}
+
+\[\begin{array}{l}
+(x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \to \\
+\qquad \cf(@head@(x))
+\end{array}\]
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Querying a Theorem Prover}
+
+  We ask for the satisfiablitiy of
+
+  $$
+    \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} ,
+    \neg \phi_{\text{contract}}
+  $$
+
+  If it is unsatisfiable, we know that
+
+  $$
+    \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} \vdash
+    \phi_{\text{contract}}
+  $$
+
+  Does this means that the contract hold? What if we have made a
+  bogus, unsound translation? Powered by denotational semantics!
+
+\end{frame}
+
+\newcommand{\ol}[1]{\overline{#1}}
+\newcommand{\Ct}{{\tt C}}
+\newcommand{\CF}{{\tt CF}}
+\newcommand{\roll}[1]{#1}
+\newcommand{\unroll}[1]{#1}
+\newcommand{\bind}[2]{#1(#2)}
+\newcommand{\ret}[1]{#1}
+\newcommand{\injK}[2]{\mathsf{#1}(#2)}
+\newcommand{\injKZ}[1]{\mathsf{#1}}
+\newcommand{\injFun}[1]{\mathsf{Fun}(#1)}
+\newcommand{\injBad}{\mathsf{Bad}}
+\newcommand{\dbrace}[1]{[\![#1]\!]}
+\newcommand{\Fcf}{F_{\lcfZ}}
+\newcommand{\lcfZ}{\textsf{cf}}
+\newcommand{\dapp}{\mathsf{app}}
+
+\begin{frame}
+  \frametitle{Satisfying a Contract, Denotationally}
+
+\[\begin{array}{rcl}
+\multicolumn{3}{c}{
+  {\dbrace{\Ct}_{\rho} \subseteq D_{\infty}}
+}
+\\ \\
+\dbrace{x \mid e}_\rho
+  & =  & \{ d \mid \unroll{d} = \bot \, \lor \, \unroll{\dbrace{e}_{\rho,x \mapsto d}}
+                \in \{ \ret{\injKZ{True} , \bot} \} \}
+\\[1em]
+\dbrace{(x{:}\Ct_1) \to \Ct_2}_{\rho}
+ & = & \{ d \mid
+           \forall d' \!\in\! \dbrace{\Ct_1}_\rho.
+           \dapp(d,d') \in \dbrace{\Ct_2}_{\rho,x \mapsto d'}
+           \}
+\\[1em]
+\dbrace{\Ct_1 \& \Ct_2}_\rho
+ & = & \{ d | d \in \dbrace{\Ct_1}_\rho \land d \in \dbrace{\Ct_2}_\rho \}
+\\[1em]
+\dbrace{\CF}_\rho & = &  \Fcf^{\infty}  \\
+\multicolumn{3}{l}{\text{where}} \\
+   F_{\lcfZ}^{\infty} & = & \{ \bot \} \\
+                   & \cup & \{\;\injK{K}{\ol{d}} \mid K^n \in \Sigma,\; d_i \in F_{\lcfZ}^{\infty} \} \\
+                   & \cup & \{\;\injFun{d} \mid \forall d' \in F_{\lcfZ}^{\infty}.\; d(d') \in F_{\lcfZ}^{\infty} \}
+\end{array}\]
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Soundness Theorem}
+\begin{theorem}\label{thm:den-contr-satisfaction} Assume that $e$ and $\Ct$ contain no free
+term variables. Then the FOL translation of the claim $e \in \Ct$ holds in the model
+if and only if the denotation of $e$ is in the semantics of $\Ct$.  Formally:
+$$\langle D_\infty,{\cal I}\rangle \models \trc{e \in \Ct}
+  \;\; \Leftrightarrow \;\; \dbrace{e} \in \dbrace{\Ct}
+$$
+\end{theorem}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Recursion and Fixed Point Induction}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Splitting Goals}
+  @risers@ in GHC Core is a bunch of cases...
+
+  \begin{code}
+  risers = \ xs -> case xs of {
+      [] -> []
+      y : ys -> case ys of {
+          [] -> [[y]]
+          z : zs -> case risers (z:zs) of {
+              [] -> error "internal error";
+              : s ss -> case y <= z of {
+                  False -> [y] : (s:ss)
+                  True ->  (y:s) : ss
+      } } } }
+  \end{code}
+
+  These cases becomes a big chunk of translated formulae, making a big
+  theory. However, we can split every left-hand side of a case
+  alternative a small, separate theory when proving a contract for
+  @risers@. In practice, these smaller theories are much easier for
+  theorem provers to handle.
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Printing Counterexamples}
+
+  We ask for the satisfiablitiy of
+
+  $$
+    \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} ,
+    \neg \phi_{\text{contract}}
+  $$
+
+  If it is satisfiable, we know that there exists a model $M$ such that
+
+  $$
+    M \models
+    \mathcal{T}_{\text{datatypes}},
+    \mathcal{T}_{\text{functions}} ,
+    \neg \phi_{\text{contract}}
+  $$
+
+  Happens when:
+    \begin{itemize}
+      \item the contract does not hold
+
+      \item assumptions are missing (induction, other contracts)
+
+      \item the theory is incomplete
+    \end{itemize}
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Infinite Models}
+
+But it seems hard to ever get satisfiable from a theorem prover:
+
+\begin{theorem}First order theories with any function both  injective and
+  non-surjective function only admits infinite models.
+\end{theorem}
+
+Recursive and parameterised non-recursive(!) datatypes have this
+property:
+
+  \[\begin{array}{ll}
+  \mathsf{just}(x) \neq \mathsf{nothing}, &
+  \mathsf{just_0}(\mathsf{just}(x)) = x
+  \end{array}\]
+
+For the semi-decidable problem to find infinite models no general
+theorem provers exist.
+
+\end{frame}
+
+\newcommand\Min[0]{\mathsf{min}}
+
+\begin{frame}
+  \frametitle{``Minimisation'': Our Trick for Finite Models and Efficiency }
+
+  \begin{itemize}
+    \item Idea: introduce a new predicate, $\Min$, that means a term
+      should be subject to reduction (to weak head normal form).
+
+    \item Selector axioms:
+
+      $$
+        \Min(\mathsf{just}(x)) \to \mathsf{just_0}(\mathsf{just}(x)) = x
+      $$
+
+    \item The name comes from that we should try to make as few domain
+      elements ``$\Min$''.
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Function Translation with Minimisation}
+
+  \begin{verbatim}
+    head :: [a] -> a
+    head (x:xs) = x
+    head []     = BAD
+    head BAD    = BAD
+    head _       = UNR
+  \end{verbatim}
+  \[\begin{array}{lllll}
+  \Min(\head{x})            & \to & \Min(x),            &   & \\
+  \Min(\head{\cons{x}{xs}}) & \to & \head{\cons{x}{xs}} & = & x,    \\
+  \Min(\head{\nil})         & \to & \head{\nil}         & = & \bad, \\
+  \Min(\head{\bad})         & \to & \head{\bad}         & = & \bad, \\
+  \Min(\head{x})            & \to & (\head{x}            & = & \unr \\
+  & & \multicolumn{3}{l}{\quad \lor \; \only<1>{(\exists \; y \; ys . x = \cons{y}{ys})}
+                                   \only<2>{x = \cons{\conspi{x}}{\conspii{x}}}} \\
+  & & \multicolumn{3}{l}{\quad \lor \; x = \nil} \\
+  & & \multicolumn{3}{l}{\quad \lor \; x = \bad)}
+  \end{array}\]
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Contract Translation with Minimisation}
+
+  Distinguish between assumptions ($e \in C$) and goals ($e \notin C$).
+
+  Contracts should only be assumed
+  when they are ``$\Min$'', contracts the prove should always be
+  ``$\Min$'' to drive computation.
+
+  \[\begin{array}{rcl}
+  \trc{e \in \{x \mid p \}}
+    & = &      \Min(\etrans{}{}{e}) \land \Min(\etrans{}{}{p}[\etrans{}{}{e}/x]) \\
+    &   &      (\etrans{}{}{e} {=} \unr \; \lor \; \\
+    &   &      \etrans{}{}{p}[\etrans{}{}{e}/x] {=} \unr \; \lor \; \\
+    &   &      \etrans{}{}{p}[\etrans{}{}{e}/x] {=} \True)
+  \\ \\
+  \trc{e \notin \{x \mid p \}}
+    & = &      \Min(\etrans{}{}{e}) \land \Min(\etrans{}{}{p}[\etrans{}{}{e}/x]) \\
+    &   &      (\etrans{}{}{e} \neq \unr \; \lor \; \\
+    &   &      \etrans{}{}{p}[\etrans{}{}{e}/x] {=} \bad \; \lor \; \\
+    &   &      \etrans{}{}{p}[\etrans{}{}{e}/x] {=} \False)
+  \\ \\
+  \trc{e \in (x{:}C_1) \to C_2}
+    & = & \forall x @.@  \Min(e\;x) \to \\
+    &   & \qquad\quad (\trc{x \notin C_1} \lor \trc{e\;x \in C_2}) \\
+  \trc{e \notin (x{:}C_1) \to C_2}
+    & = & \exists x @.@  \trc{x \in C_1} \land \trc{e\;x \notin C_2}
+  \end{array}\]
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Finite Model Finding}
+
+  \begin{itemize}
+
+    \item We use the finite model finder @paradox@, which exhaustively
+      seaches for models with increasing domain size and gives us the
+      smallest possible model.
+
+    \item Countermodels are typically very few elements (4-6), with many
+      infinite values such as @xs = Nothing : xs@.
+
+    \item Since constructors now are not injective, we need to do a
+      little work to find out how domain elements really are
+      represented.
+
+  \end{itemize}
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Unearthing a Model}
+
+    \begin{code}
+        (-) :: Nat -> Nat -> Nat
+        x      - Zero   = x
+        Zero   - _      = error "Negative Nat!"
+        Succ x - Succ y = x - y
+    \end{code}
+    $$@(-)@ \in \{ @CF@ -> @CF@ -> @CF@ \}$$
+
+    @paradox@ gives a countermodel with 5 elements:
+    $\mathbf{D} = \{\mathbf{1} , \mathbf{2} , \cdots , \mathbf{5}\}$
+
+\pause
+
+\[\begin{array}{rcl}
+@x@ & = & \mathbf{3} \\
+@y@ & = & \mathbf{4}
+\end{array}\]
+
+\end{frame}
+
+\begin{frame}[fragile]
+  \frametitle{Figuring out what @x@ and @y@ are}
+
+  \[\begin{array}{ccc}
+
+    \begin{array}{rcl}
+    @x@ & = & \mathbf{3} \\
+    @y@ & = & \mathbf{4} \\
+    @BAD@ & = & \mathbf{1} \\
+    @UNR@ & = & \mathbf{2} \\
+    @Zero@ & = & \mathbf{3} \\
+    \end{array}
+
+  &
+
+    \begin{array}{lcl}
+    @Succ@(\mathbf{1}) & = & \mathbf{5} \\
+    @Succ@(\mathbf{2}) & = & \mathbf{2} \\
+    @Succ@(\mathbf{3}) & = & \mathbf{4} \\
+    @Succ@(\mathbf{4}) & = & \mathbf{5} \\
+    @Succ@(\mathbf{5}) & = & \mathbf{5} \\
+    \end{array}
+
+  &
+
+    \begin{array}{lcl}
+    @Succ@_0(\mathbf{1}) & = & \mathbf{3} \\
+    @Succ@_0(\mathbf{2}) & = & \mathbf{3} \\
+    @Succ@_0(\mathbf{3}) & = & \mathbf{2} \\
+    @Succ@_0(\mathbf{4}) & = & \mathbf{3} \\
+    @Succ@_0(\mathbf{5}) & = & \mathbf{5} \\
+    \end{array}
+
+  \\
+  \\
+
+    x          & @Succ@(x)  & @Succ@_0(@Succ@(x)) \\
+    \mathbf{1} & \mathbf{5} & \mathbf{5} \\
+    \mathbf{2} & \mathbf{2} & \mathbf{3} \\
+    \mathbf{3} & \mathbf{4} & \mathbf{3} \\
+    \mathbf{4} & \mathbf{5} & \mathbf{5} \\
+    \mathbf{5} & \mathbf{5} & \mathbf{5} \\
+
+  \\
+
+    \multicolumn{3}{c}{@y@ = @Succ Zero@, \quad  @x@ = @Zero@}
+
+  \end{array}\]
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Ill-typed Models}
+    In the model above, we have
+
+    $$@x@ = @Zero@ = @True@$$
+
+    The reason is that we do not add discrimination axioms for
+    elements of different types - these are never needed in proofs.
+
+    Two ways to proceed:
+
+    \begin{itemize}
+
+      \item Do type inference on the model to make sure that it is
+        printed type-correct
+
+      \item Add discrimination axioms for constructors of different
+        types.
+
+    \end{itemize}
+\end{frame}
+
+\begin{frame}
+  \frametitle{Integer Arithmetic}
+
+  Project stated of using only pure first order theories,
+  communicating with theorem provers using the \textrm{TPTP} format.
+  This format (naturally) has no support for built-ins like @Int@.
+
+  @z3@, initially being an SMT solver, reads various SMT formats that
+  support @Int@.
+
+  However we cannot print countermodels since @z3@ is not able to
+  find the finite countermodels as @paradox@ can.
+
+\end{frame}
+
+\begin{frame}
+  \frametitle{Open Questions / Future Work}
+
+    \begin{itemize}
+
+      \item Do we need special tehorem provers or SMT theories for
+        (lazy) functional programs?
+
+      \item Can @z3@ be used effictively with triggers (as the @min@
+        predicate)?
+
+      \item Can @z3@ be used to find counter-models?
+
+      \item How far can automated techniques get us (in comparison
+        with fully or semi interactive tools)?
+
+      \item Is there a (provably) complete $\Min$-axiomatisation with
+        guaranteed finite countermodels?
+
+    \end{itemize}
+
+\end{frame}
+
+\end{document}
+
