@@ -64,6 +64,7 @@
 \maketitle
 \makeatactive
 
+\newcommand{\unitcpo}{{\sf{\bf 1}}}
 \newcommand{\Th}[0]{{\cal T}}
 \newcommand{\alttr}[1]{#1^{m}}
 \newcommand{\ol}[1]{\overline{#1}}
@@ -159,7 +160,16 @@
 \begin{frame}[fragile]
   \frametitle{Denotational semantics}
 
-  Idea: translate a denotational model to FOL.
+  Idea: translate a denotational model $\langle D_\infty,{\cal I}\rangle$ to FOL.
+
+  Value domain $V_{\infty}$:
+    \[V_{\infty} = \begin{array}[t]{ll}
+             \quad\;{\prod_{n_1}{D_{\infty}}} & K_1^{n_1} \in \Sigma \\
+             \; + \;\ldots                    & \ldots \\
+             \; + \;{\prod_{n_k}{D_{\infty}}} & K_k^{n_k} \in \Sigma \\
+             \; + \;(D_{\infty} =>_c D_{\infty}) \\
+             \; + \;\unitcpo_{bad} \quad
+    \end{array}\]
 
   \begin{itemize}
     \item Discrimination axioms
@@ -510,20 +520,23 @@
 \begin{frame}[fragile]
   \frametitle{Contract Translation with Minimisation}
 
-  Distinguish between assumptions ($e \in C$) and goals ($e \notin C$).
+  \begin{itemize}
+    \item Distinguish between assumptions ($e \in C$) and goals ($e
+      \notin C$).
 
-  Contracts should only be assumed
-  when they are ``$\Min$'', contracts the prove should always be
-  ``$\Min$'' to drive computation.
+    \item Contracts should only be assumed when they are ``$\Min$'',
+      contracts the prove should always be ``$\Min$'' to drive
+      computation.
 
-  When doing induction on $f$, assume for $f^{circ}$ and prove for
-  $f^\bullet$. Ask for the satisfiability of:
+    \item Example: induction on $f$, assume for $f^\circ$ and prove
+      for $f^\bullet$. Ask for the satisfiability of:
 
-  $$
-    \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} ,
-    \trc{f^\circ \in C},
-    \trc{f^\bullet \notin C}
-  $$
+      $$
+        \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} ,
+        \trc{f^\circ \in C},
+        \trc{f^\bullet \notin C}
+      $$
+  \end{itemize}
 \end{frame}
 
 \begin{frame}[fragile]
