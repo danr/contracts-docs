@@ -579,24 +579,29 @@
 
 \end{frame}
 
+
 \begin{frame}[fragile]
   \frametitle{Experimental results}
+    Tests on 175 unsatisfiable contracts
 
-    \begin{code}
-    With minimisation:
-    smt-z3     timeouts:  4.6%    avg:   0.7ms
-    z3         timeouts:  5.2%    avg:   0.7ms
-    vampire    timeouts: 19.5%    avg:  17.2ms
-    equinox    timeouts: 13.8%    avg: 104.1ms
-    eprover    timeouts: 25.9%    avg:   3.8ms
+    \begin{center}
 
-    Without minimisation:
-    smt-z3     timeouts: 10.3%    avg:   1.8ms
-    z3         timeouts: 11.5%    avg:   0.5ms
-    vampire    timeouts: 26.4%    avg:   9.1ms
-    equinox    timeouts: 45.4%    avg:  23.2ms
-    eprover    timeouts: 41.4%    avg:   2.4ms
-    \end{code}
+      \begin{tabular}{l | r@{.}l | r@{.}l | r@{.}l | r@{.}l | }
+                & \multicolumn{4}{c |}{With minimisation}
+                & \multicolumn{4}{c |}{Without minimisation} \\
+        prover  & \multicolumn{2}{c |}{timeouts}
+                & \multicolumn{2}{c |}{avg time}
+                & \multicolumn{2}{c |}{timeouts}
+                & \multicolumn{2}{c |}{avg time} \\
+        \hline
+        z3 (smt)  &  4&6\% &   0&7ms & 10&3\%  &  1&8ms \\
+        z3        &  5&2\% &   0&7ms & 11&5\%  &  0&5ms \\
+        vampire   & 19&5\% &  17&2ms & 26&4\%  &  9&1ms \\
+        equinox   & 13&8\% & 104&1ms & 45&4\%  & 23&2ms \\
+        eprover   & 25&9\% &   3&8ms & 41&4\%  &  2&4ms \\
+      \end{tabular}
+
+    \end{center}
 
 \end{frame}
 
