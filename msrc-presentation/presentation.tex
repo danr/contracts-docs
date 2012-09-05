@@ -339,9 +339,12 @@
   \trc{e \in \cf} & = & \formula{\cf({\etrans{\Sigma}{\Gamma}{e}})} \\
   \end{array}\]
 
-  \begin{code}
-    contract_1 = head ::: Pred (not . null) --> CF
-  \end{code}
+  \[\begin{array}{l}
+  \trc{@head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf} = \\
+  \\
+  \forall x @.@ (x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \\
+  \qquad\qquad \to \cf(@head@(x))
+  \end{array}\]
 
 \end{frame}
 
@@ -577,8 +580,18 @@
     & = & \exists x @.@  \trc{x \in C_1} \land \trc{e\;x \notin C_2}
   \end{array}\]
 
+
 \end{frame}
 
+\begin{frame}[fragile]
+  \frametitle{Example Contract Translation with Minimisation}
+    \[\begin{array}{l}
+    \trc{@head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf} = \\
+    \\
+    \forall x @.@ (x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \\
+    \qquad\qquad \to \cf(@head@(x))
+    \end{array}\]
+\end{frame}
 
 \begin{frame}[fragile]
   \frametitle{Experimental results}
@@ -634,7 +647,7 @@
         Zero   - _      = error "Negative Nat!"
         Succ x - Succ y = x - y
     \end{code}
-    $$@(-)@ \in \{ @CF@ -> @CF@ -> @CF@ \}$$
+    $$@(-)@ \in (@x@ : \cf) \to (@y@ : \cf) \to \cf $$
 
     @paradox@ gives a countermodel with 5 elements:
     $\mathbf{D} = \{\mathbf{1} , \mathbf{2} , \cdots , \mathbf{5}\}$
@@ -745,7 +758,7 @@
 
   $$
     \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} ,
-    \neg \phi_{\text{contract}}
+    \trc{e \notin C}
   $$
 
   If it is satisfiable, we know that there exists a model $M$ such that
@@ -754,7 +767,7 @@
     M \models
     \mathcal{T}_{\text{datatypes}},
     \mathcal{T}_{\text{functions}} ,
-    \neg \phi_{\text{contract}}
+    \trc{e \notin C}
   $$
 
   Happens when:
@@ -798,25 +811,6 @@
 \begin{frame}[fragile]
   \frametitle{unused slides}
 
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Contracts}
-  \begin{verbatim}
-    head :: [a] -> a
-    head (x:xs) = x
-    head []     = error "head: empty list!"
-  \end{verbatim}
-
-  Some example contracts for @head@:
-
-  \[\begin{array}{l}
-    @head@ \in \cf \to \cf \\
-    @head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf \\
-    @head@ \in \cf \conj \{ @xs@ \mid @not (null xs)@ \} \to \cf
-  \end{array}\]
-
-  $\cf$ stands for Crash-Free
 \end{frame}
 
 \begin{frame}[fragile]
