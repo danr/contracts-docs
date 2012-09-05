@@ -92,7 +92,8 @@
 \newcommand\maps[0]{\mathsf{map}}
 \newcommand\map[2]{\maps(#1,#2)}
 \newcommand\ptr[1]{#1_\mathsf{ptr}}
-\newcommand\app[2]{\mathsf{ap}(#1,#2)}
+\newcommand\appsym[0]{\mathsf{app}}
+\newcommand\app[2]{\appsym(#1,#2)}
 \newcommand\appp[3]{\app{\app{#1}{#2}}{#3}}
 \newcommand\unr[0]{@UNR@}
 \newcommand\True[0]{@True@}
@@ -129,6 +130,9 @@
     @filter@ \in (p : \cf \to \cf) \to \cf
                 \to \cf \conj \{ ys \mid @all@ \; p \; ys \}
   \end{array}\]
+
+  $\cf$ means does not crash in any context: \\ @(True,BAD)@ is not since
+  $@snd (True,BAD)@{=}@BAD@$ crashes.
 
 \end{frame}
 
@@ -174,9 +178,17 @@
   \begin{itemize}
     \item Discrimination axioms
 
-    $$
-    \cons{x}{xs} \neq \nil \neq \unr \neq \bad
-    $$
+    \[\begin{array}{cc}
+
+      \cons{x}{xs} \neq \nil \neq \unr \neq \bad
+
+      &
+
+      \begin{array}{lll }
+      \bot          & \text{in FOL:} & \unr\\
+      \unitcpo_{bad} & \text{in FOL:} & \bad
+      \end{array}
+    \end{array}\]
 
     \item Injectivity axioms
 
@@ -243,7 +255,8 @@
 
   \[\begin{array}{lll}
   \cmap{f}{\nil}         & = & \nil, \\
-  \cmap{f}{\cons{x}{xs}} & = & \cons{\app{f}{xs}}{\cmap{f}{xs}}  \\
+  \cmap{f}{\cons{x}{xs}} & = & \\
+                         & \multicolumn{2}{l}{\cons{\app{f}{xs}}{\cmap{f}{xs}}}  \\
   \cmap{f}{\bad}         & = & \bad, \\
   \cmap{f}{x}            & = & \unr \\
   \multicolumn{3}{l}{\quad \lor \; \only<1-4>{(\exists \; y \; ys . x = \cons{y}{ys})}
@@ -357,21 +370,23 @@
 
 \begin{frame}[fragile]
   \frametitle{Recursive functions}
-
+  \vspace{-\baselineskip}
   \begin{code}
-    length []     = Zero
-    length (x:xs) = Succ (length xs)
-
-    length_contract = length ::: CF --> CF
+    data Nat = Z | S Nat
+    length []     = Z
+    length (x:xs) = S (length xs)
   \end{code}
-
-  Has an counterexample @xs = () : xs@,
-
+  \vspace{-\baselineskip}
+  $$@length@ \in \cf \to \cf$$
+  Has a counterexample @xs = () : xs@:
   $$@length xs@ = @length (() : xs)@ = @S (length xs)@ = @S inf@ = @inf@$$
 
   Can we have $\neg\cf(@inf@)$? Yes, since the only related axiom says:
 
-  $$\neg\cf(@inf@) \leftrightarrow \neg\cf(@S inf@)$$
+  $$\neg\cf(@S inf@) \leftrightarrow \neg\cf(@inf@)$$
+
+  Problem: we get all fixed points in our FOL axiomatisation, but
+  the denotational model only wants least fixed points.
 
 \end{frame}
 
@@ -825,4 +840,3 @@
 \end{frame}
 
 \end{document}
-
