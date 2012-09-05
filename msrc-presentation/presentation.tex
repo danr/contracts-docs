@@ -6,6 +6,7 @@
 \usetikzlibrary{shapes,arrows,calc}
 
 \usepackage{amssymb}
+\usepackage{verbatim} % for comment
 
 \usepackage{hyperref}
 
@@ -162,9 +163,11 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Denotational semantics}
+  \frametitle{Denotational Semantics}
 
-  Idea: translate a denotational model $\langle D_\infty,{\cal I}\rangle$ to FOL.
+  Idea: translate a denotational model
+  $D_\infty$     % $\langle D_\infty,{\cal I}\rangle$
+  to FOL.
 
   Value domain $V_{\infty}$:
     \[V_{\infty} = \begin{array}[t]{ll}
@@ -203,7 +206,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Guiding principle for translation to FOL}
+  \frametitle{Guiding Principle for Translation to FOL}
 
   \begin{theorem}
   Assume that $\Sigma \vdash P$ and $e_1$ and $e_2$ contain no free term variables. The following
@@ -272,7 +275,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Guiding principle for translation of contracts}
+  \frametitle{Guiding Principle for Translation of Contracts}
 
   \begin{theorem}
     Assume that $e$ and $\Ct$ contain no free term variables. Then
@@ -315,10 +318,16 @@
 
     \pause
 
-    \[\begin{array}{lll}
-    \cf(\unr), & \neg \cf(\bad), & \cf(\nil),   \\
-    \multicolumn{3}{l}{\cf(\cons{x}{xs}) \leftrightarrow (\cf(x) \land \cf(xs))}
-    \end{array}\]
+    \[
+    \begin{array}{lr}
+      \text{Simple axioms for CF:}
+      &
+      \begin{array}{lll}
+      \cf(\unr), & \neg \cf(\bad), & \cf(\nil),   \\
+      \multicolumn{3}{l}{\cf(\cons{x}{xs}) \leftrightarrow (\cf(x) \land \cf(xs))}
+      \end{array}
+    \end{array}
+    \]
 
 \end{frame}
 
@@ -365,14 +374,17 @@
     \trc{e \in C}
   $$
 
-  Carefully designed so the soundness theorem is true :)
+  Carefully designed so the soundness theorem is true, so we have
 
-  What if we get satisfiable?
+  $$
+      \dbrace{e} \in \dbrace{C}
+  $$
+
 
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Recursive functions}
+  \frametitle{Recursive Functions and Fixed Points}
   \vspace{-\baselineskip}
   \begin{code}
     data Nat = Z | S Nat
@@ -435,7 +447,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Infinite models}
+  \frametitle{Infinite Models}
 
   For a given theory $\mathcal{T}$, either of these three is true:
 
@@ -462,7 +474,7 @@
 
 
 \begin{frame}[fragile]
-  \frametitle{\emph{Desired} properties of an alternative translation}
+  \frametitle{\emph{Desired} Properties of an Alternative Translation}
 
   \begin{enumerate}
     \item \emph{Soundness}
@@ -523,7 +535,7 @@
   }
 
   \[\begin{array}{lllll}
-  \Min(\map{f}{x}) & \to & \map{f}{x} & & \\
+  \Min(\map{f}{x}) & \to & \Min(x) & & \\
   \mmap{f}{\nil}         & = & \nil, \\
   \mmap{f}{\cons{x}{xs}} & = & \\
   & & \multicolumn{3}{c}{\cons{\app{f}{xs}}{\map{f}{xs}}}  \\
@@ -583,18 +595,21 @@
 
 \end{frame}
 
-\begin{frame}[fragile]
-  \frametitle{Example Contract Translation with Minimisation}
-    \[\begin{array}{l}
-    \trc{@head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf} = \\
-    \\
-    \forall x @.@ (x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \\
-    \qquad\qquad \to \cf(@head@(x))
-    \end{array}\]
-\end{frame}
+\begin{comment}
+  % unfinished slide
+  \begin{frame}[fragile]
+    \frametitle{Example Contract Translation with Minimisation}
+      \[\begin{array}{l}
+      \trc{@head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf} = \\
+      \\
+      \forall x @.@ (x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \\
+      \qquad\qquad \to \cf(@head@(x))
+      \end{array}\]
+  \end{frame}
+\end{comment}
 
 \begin{frame}[fragile]
-  \frametitle{Experimental results}
+  \frametitle{Experimental Results}
     Tests on 175 unsatisfiable contracts
 
     \begin{center}
@@ -735,7 +750,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Optimisations and tricks}
+  \frametitle{Optimisations and Tricks}
 
     \begin{itemize}
 
@@ -752,7 +767,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{What when we get satisfiable back?}
+  \frametitle{What to do with Satisfiable?}
 
   We ask for the satisfiablitiy of
 
@@ -802,7 +817,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Obtaining the contract checker}
+  \frametitle{Obtaining the Haskell Contract Checker}
     \begin{center}
       {\huge @github.com/danr/contracts@}
     \end{center}
