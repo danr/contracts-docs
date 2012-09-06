@@ -6,6 +6,7 @@
 \usetikzlibrary{shapes,arrows,calc}
 
 \usepackage{amssymb}
+\usepackage{verbatim} % for comment
 
 \usepackage{hyperref}
 
@@ -92,7 +93,8 @@
 \newcommand\maps[0]{\mathsf{map}}
 \newcommand\map[2]{\maps(#1,#2)}
 \newcommand\ptr[1]{#1_\mathsf{ptr}}
-\newcommand\app[2]{\mathsf{ap}(#1,#2)}
+\newcommand\appsym[0]{\mathsf{app}}
+\newcommand\app[2]{\appsym(#1,#2)}
 \newcommand\appp[3]{\app{\app{#1}{#2}}{#3}}
 \newcommand\unr[0]{@UNR@}
 \newcommand\True[0]{@True@}
@@ -130,6 +132,9 @@
                 \to \cf \conj \{ ys \mid @all@ \; p \; ys \}
   \end{array}\]
 
+  $\cf$ means does not crash in any context: \\ @(True,BAD)@ is not since
+  $@snd (True,BAD)@{=}@BAD@$ crashes.
+
 \end{frame}
 
 \begin{frame}[fragile]
@@ -158,9 +163,11 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Denotational semantics}
+  \frametitle{Denotational Semantics}
 
-  Idea: translate a denotational model $\langle D_\infty,{\cal I}\rangle$ to FOL.
+  Idea: translate a denotational model
+  $D_\infty$     % $\langle D_\infty,{\cal I}\rangle$
+  to FOL.
 
   Value domain $V_{\infty}$:
     \[V_{\infty} = \begin{array}[t]{ll}
@@ -174,9 +181,17 @@
   \begin{itemize}
     \item Discrimination axioms
 
-    $$
-    \cons{x}{xs} \neq \nil \neq \unr \neq \bad
-    $$
+    \[\begin{array}{cc}
+
+      \cons{x}{xs} \neq \nil \neq \unr \neq \bad
+
+      &
+
+      \begin{array}{lll }
+      \bot          & \text{in FOL:} & \unr\\
+      \unitcpo_{bad} & \text{in FOL:} & \bad
+      \end{array}
+    \end{array}\]
 
     \item Injectivity axioms
 
@@ -191,7 +206,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Guiding principle for translation to FOL}
+  \frametitle{Guiding Principle for Translation to FOL}
 
   \begin{theorem}
   Assume that $\Sigma \vdash P$ and $e_1$ and $e_2$ contain no free term variables. The following
@@ -243,7 +258,8 @@
 
   \[\begin{array}{lll}
   \cmap{f}{\nil}         & = & \nil, \\
-  \cmap{f}{\cons{x}{xs}} & = & \cons{\app{f}{xs}}{\cmap{f}{xs}}  \\
+  \cmap{f}{\cons{x}{xs}} & = & \\
+                         & \multicolumn{2}{l}{\cons{\app{f}{xs}}{\cmap{f}{xs}}}  \\
   \cmap{f}{\bad}         & = & \bad, \\
   \cmap{f}{x}            & = & \unr \\
   \multicolumn{3}{l}{\quad \lor \; \only<1-4>{(\exists \; y \; ys . x = \cons{y}{ys})}
@@ -259,7 +275,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Guiding principle for translation of contracts}
+  \frametitle{Guiding Principle for Translation of Contracts}
 
   \begin{theorem}
     Assume that $e$ and $\Ct$ contain no free term variables. Then
@@ -302,10 +318,16 @@
 
     \pause
 
-    \[\begin{array}{lll}
-    \cf(\unr), & \neg \cf(\bad), & \cf(\nil),   \\
-    \multicolumn{3}{l}{\cf(\cons{x}{xs}) \leftrightarrow (\cf(x) \land \cf(xs))}
-    \end{array}\]
+    \[
+    \begin{array}{lr}
+      \text{Simple axioms for CF:}
+      &
+      \begin{array}{lll}
+      \cf(\unr), & \neg \cf(\bad), & \cf(\nil),   \\
+      \multicolumn{3}{l}{\cf(\cons{x}{xs}) \leftrightarrow (\cf(x) \land \cf(xs))}
+      \end{array}
+    \end{array}
+    \]
 
 \end{frame}
 
@@ -326,9 +348,12 @@
   \trc{e \in \cf} & = & \formula{\cf({\etrans{\Sigma}{\Gamma}{e}})} \\
   \end{array}\]
 
-  \begin{code}
-    contract_1 = head ::: Pred (not . null) --> CF
-  \end{code}
+  \[\begin{array}{l}
+  \trc{@head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf} = \\
+  \\
+  \forall x @.@ (x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \\
+  \qquad\qquad \to \cf(@head@(x))
+  \end{array}\]
 
 \end{frame}
 
@@ -349,29 +374,34 @@
     \trc{e \in C}
   $$
 
-  Carefully designed so the soundness theorem is true :)
+  Carefully designed so the soundness theorem is true, so we have
 
-  What if we get satisfiable?
+  $$
+      \dbrace{e} \in \dbrace{C}
+  $$
+
 
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Recursive functions}
-
+  \frametitle{Recursive Functions and Fixed Points}
+  \vspace{-\baselineskip}
   \begin{code}
-    length []     = Zero
-    length (x:xs) = Succ (length xs)
-
-    length_contract = length ::: CF --> CF
+    data Nat = Z | S Nat
+    length []     = Z
+    length (x:xs) = S (length xs)
   \end{code}
-
-  Has an counterexample @xs = () : xs@,
-
+  \vspace{-\baselineskip}
+  $$@length@ \in \cf \to \cf$$
+  Has a counterexample @xs = () : xs@:
   $$@length xs@ = @length (() : xs)@ = @S (length xs)@ = @S inf@ = @inf@$$
 
   Can we have $\neg\cf(@inf@)$? Yes, since the only related axiom says:
 
-  $$\neg\cf(@inf@) \leftrightarrow \neg\cf(@S inf@)$$
+  $$\neg\cf(@S inf@) \leftrightarrow \neg\cf(@inf@)$$
+
+  Problem: we get all fixed points in our FOL axiomatisation, but
+  the denotational model only wants least fixed points.
 
 \end{frame}
 
@@ -417,7 +447,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Infinite models}
+  \frametitle{Infinite Models}
 
   For a given theory $\mathcal{T}$, either of these three is true:
 
@@ -444,7 +474,7 @@
 
 
 \begin{frame}[fragile]
-  \frametitle{\emph{Desired} properties of an alternative translation}
+  \frametitle{\emph{Desired} Properties of an Alternative Translation}
 
   \begin{enumerate}
     \item \emph{Soundness}
@@ -505,7 +535,7 @@
   }
 
   \[\begin{array}{lllll}
-  \Min(\map{f}{x}) & \to & \map{f}{x} & & \\
+  \Min(\map{f}{x}) & \to & \Min(x) & & \\
   \mmap{f}{\nil}         & = & \nil, \\
   \mmap{f}{\cons{x}{xs}} & = & \\
   & & \multicolumn{3}{c}{\cons{\app{f}{xs}}{\map{f}{xs}}}  \\
@@ -525,7 +555,7 @@
       \notin C$).
 
     \item Contracts should only be assumed when they are ``$\Min$'',
-      contracts the prove should always be ``$\Min$'' to drive
+      contracts to prove should always be ``$\Min$'' to drive
       computation.
 
     \item Example: induction on $f$, assume for $f^\circ$ and prove
@@ -562,26 +592,44 @@
     & = & \exists x @.@  \trc{x \in C_1} \land \trc{e\;x \notin C_2}
   \end{array}\]
 
+
 \end{frame}
 
+\begin{comment}
+  % unfinished slide
+  \begin{frame}[fragile]
+    \frametitle{Example Contract Translation with Minimisation}
+      \[\begin{array}{l}
+      \trc{@head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf} = \\
+      \\
+      \forall x @.@ (x{=}\unr \lor @not@(@null@(x)){=}\unr \lor @not@(@null@(x)){=}\True) \\
+      \qquad\qquad \to \cf(@head@(x))
+      \end{array}\]
+  \end{frame}
+\end{comment}
+
 \begin{frame}[fragile]
-  \frametitle{Experimental results}
+  \frametitle{Experimental Results}
+    Tests on 175 unsatisfiable contracts
 
-    \begin{code}
-    With minimisation:
-    smt-z3     timeouts:  4.6%    avg:   0.7ms
-    z3         timeouts:  5.2%    avg:   0.7ms
-    vampire    timeouts: 19.5%    avg:  17.2ms
-    equinox    timeouts: 13.8%    avg: 104.1ms
-    eprover    timeouts: 25.9%    avg:   3.8ms
+    \begin{center}
 
-    Without minimisation:
-    smt-z3     timeouts: 10.3%    avg:   1.8ms
-    z3         timeouts: 11.5%    avg:   0.5ms
-    vampire    timeouts: 26.4%    avg:   9.1ms
-    equinox    timeouts: 45.4%    avg:  23.2ms
-    eprover    timeouts: 41.4%    avg:   2.4ms
-    \end{code}
+      \begin{tabular}{l | r@{.}l | r@{.}l | r@{.}l | r@{.}l | }
+                & \multicolumn{4}{c |}{With minimisation}
+                & \multicolumn{4}{c |}{Without minimisation} \\
+        prover  & \multicolumn{2}{c |}{timeouts}
+                & \multicolumn{2}{c |}{avg time}
+                & \multicolumn{2}{c |}{timeouts}
+                & \multicolumn{2}{c |}{avg time} \\
+        \hline
+        z3 (smt)  &  4&6\% &   0&7ms & 10&3\%  &  1&8ms \\
+        z3        &  5&2\% &   0&7ms & 11&5\%  &  0&5ms \\
+        vampire   & 19&5\% &  17&2ms & 26&4\%  &  9&1ms \\
+        equinox   & 13&8\% & 104&1ms & 45&4\%  & 23&2ms \\
+        eprover   & 25&9\% &   3&8ms & 41&4\%  &  2&4ms \\
+      \end{tabular}
+
+    \end{center}
 
 \end{frame}
 
@@ -614,7 +662,7 @@
         Zero   - _      = error "Negative Nat!"
         Succ x - Succ y = x - y
     \end{code}
-    $$@(-)@ \in \{ @CF@ -> @CF@ -> @CF@ \}$$
+    $$@(-)@ \in (@x@ : \cf) \to (@y@ : \cf) \to \cf $$
 
     @paradox@ gives a countermodel with 5 elements:
     $\mathbf{D} = \{\mathbf{1} , \mathbf{2} , \cdots , \mathbf{5}\}$
@@ -702,7 +750,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Optimisations and tricks}
+  \frametitle{Optimisations and Tricks}
 
     \begin{itemize}
 
@@ -719,13 +767,13 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{What when we get satisfiable back?}
+  \frametitle{What to do with Satisfiable?}
 
   We ask for the satisfiablitiy of
 
   $$
     \mathcal{T}_{\text{datatypes}}, \mathcal{T}_{\text{functions}} ,
-    \neg \phi_{\text{contract}}
+    \trc{e \notin C}
   $$
 
   If it is satisfiable, we know that there exists a model $M$ such that
@@ -734,7 +782,7 @@
     M \models
     \mathcal{T}_{\text{datatypes}},
     \mathcal{T}_{\text{functions}} ,
-    \neg \phi_{\text{contract}}
+    \trc{e \notin C}
   $$
 
   Happens when:
@@ -769,7 +817,7 @@
 \end{frame}
 
 \begin{frame}[fragile]
-  \frametitle{Obtaining the contract checker}
+  \frametitle{Obtaining the Haskell Contract Checker}
     \begin{center}
       {\huge @github.com/danr/contracts@}
     \end{center}
@@ -778,25 +826,6 @@
 \begin{frame}[fragile]
   \frametitle{unused slides}
 
-\end{frame}
-
-\begin{frame}[fragile]
-  \frametitle{Contracts}
-  \begin{verbatim}
-    head :: [a] -> a
-    head (x:xs) = x
-    head []     = error "head: empty list!"
-  \end{verbatim}
-
-  Some example contracts for @head@:
-
-  \[\begin{array}{l}
-    @head@ \in \cf \to \cf \\
-    @head@ \in \{ @xs@ \mid @not (null xs)@ \} \to \cf \\
-    @head@ \in \cf \conj \{ @xs@ \mid @not (null xs)@ \} \to \cf
-  \end{array}\]
-
-  $\cf$ stands for Crash-Free
 \end{frame}
 
 \begin{frame}[fragile]
@@ -825,4 +854,3 @@
 \end{frame}
 
 \end{document}
-
