@@ -148,6 +148,20 @@ the rightmost (of $=>$s) statement if it is a recursive function. For
 the symmetry example, this means that we would do fixed point induction
 over @(==)@.
 
+It turns out that contracts as they were before this section can now
+be described in terms of explicit quantification and
+assumptions. Indeed, the following two are equivalent:
+
+\[\begin{array}{l}
+@f@ \in (x_1 : C_1) \to \cdots \to (x_n : C_n) \to C
+\\ \qquad\qquad <=> \\
+\forall \; x_1 . x_1 \in C_1 => \cdots =>
+\forall \; x_n . x_n \in C_n =>
+    @f@ \; x_1 \; \cdots \; x_n \in C
+\end{array}\]
+
+It is up to the users of to use whichever they find more useful.
+
 \subsection{First order equality in contracts}
 \dr{This is not implemented, it is something to consider}
 
