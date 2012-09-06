@@ -1,107 +1,155 @@
-\dr{I just use this section for what I am currently working on but it
-  should be spread across the article. The first subsections could be
-  merged with the previous section.}
-The language for expressing contracts in the previous section is a bit
-too weak. Here are the the new ideas:
 
-\subsection{Parameterised contracts}
+The initial contracts language is sufficient to express a wide variety
+of properties, but it is easy to extend the language to be able to
+declare more properties, and sometimes in a more straightforward way.
+This section describes the new constructs.
 
-Motivating example:
+\subsection{Parameterised Contracts and Local Assumptions}
+Can this property that describes that @all p@ is a list homomorphism
+be written as a contract?
+
+$$\forall \; @p@ \; @xs@ \; @ys@ \; . \;
+    @all p xs && all p ys@ = @all p (xs ++ ys)@$$
+
+First of all, we need to ask ourselves which of the functions this
+could be a contract for. A promising candidate seems to be @(++)@. So
+will this do for a contract?
 
 \[\begin{array}{rcl}
-@(++)@ & \in & \{ @xs@ \mid @CF@ \} \to \{ @ys@ \mid @CF@ \} \to \\
-       &     & \{ @rs@ \mid @CF@ \; \land \; @any p xs || any p ys <=> any p rs@ \}
+@(++)@ & \in & \{ @xs@ \mid @CF@ \; \& \; @any p xs@ \} \\
+       & \to & \{ @ys@ \mid @CF@ \; \& \; @any p ys@ \} \\
+       & \to & \{ @rs@ \mid @CF@ \; \& \; @any p rs@ \}
 \end{array}\]
 
-This contract was not earlier expressible because @p@ occurs free. We
-allow \emph{parameterised} contracts, and let the user write the above
-contract as follows:
+The problem here is that @p@ is a free variable, moreover, it is also
+important that $@p@ \in @CF@ \to @CF@$. One could introduce a new function
+which takes @p@ as an argument but ignores it as this:
 
 \begin{code}
-any_app :: (a -> Bool) -> Statement
-any_app p = given (p ::: CF --> CF) $
-    (++) ::: CF :-> \xs -> CF :-> \ys ->
-             CF :&: Pred (\rs ->
-                any p xs || any p ys <=> any p rs)
-\end{code}
-% $
-\dr{@Using@ is a bit annoying since the lambdas in @:->@ binds over
-  them, so I used @given = flip Using@}
-
-This is sound because we could make another function behaving exactly
-like @(++)@, but with an extra argument that is @p@, that is just
-passed along every recursive call. The above construction allows us
-to avoid making such an unnatural gymnastic.
-
-\dr{Interestingly, the above contract could be written somewhat
-  similar if we had disjunction in our contracts. That makes me
-  wonder, are coproducts admissible?}
-\dr{Later note: I cannot
-  remember how to express it as a disjunction any more}
-
-We can now also express associativity properties:
-
-\begin{code}
-app_assoc :: [a] -> Statement
-app_assoc zs = (++) :::
-    CF :-> \xs -> CF :-> \ys -> CF :&: Pred
-        (\rs -> rs ++ zs == xs ++ (ys ++ zs))
+append_dummy p xs ys = xs ++ ys
 \end{code}
 
-\subsection{Partially applied contracts}
+Now, the contract can be expressed:
 
-Quite the opposite to parameterised contracts, we also allow
-\emph{partially applied} contracts. An example:
-$$@map fromJust@ \in \{ @xs@ \mid @all isJust xs@ \} \to @CF@$$
+\[\begin{array}{rcl}
+@append_dummy@ & \in & ( @p@ : @CF@ \to @CF@ ) \\
+               & \to & \{ @xs@ \mid @CF@ \; \& \; @any p xs@ \} \\
+               & \to & \{ @ys@ \mid @CF@ \; \& \; @any p ys@ \} \\
+               & \to & \{ @rs@ \mid @CF@ \; \& \; @any p rs@ \}
+\end{array}\]
 
-This is now simple to express in our language:
+This approach has several downsides:
+\begin{enumerate}
+  \item The @append_dummy@ function is not recursive, but this
+  contract needs to be proved with fixed point induction on @(++)@,
 
-\begin{code}
-unjust = map fromJust ::: Pred (all isJust) --> CF
-\end{code}
+  \item Annoying acrobatics involved in introducing a new function to
+  get a new parameter,
 
-Fixed point induction will be applied to the above contract as @map@
-here has both these characteristics:
-\begin{itemize}
-   \item it is the root of the expression, and
-   \item it is a recursive function.
-\end{itemize}
+  \item If we use this contract when proving another contract,
+  chances are that @append_dummy@ is not going to be interesting, even
+  though the property it expresses is. This could be a problem when
+  using the min-translation.
+\end{enumerate}
 
-What if we instead had @for :: [a] -> (a -> b) -> [b]@ defined
-and we wanted to express the same contract? We surely want to
-be able to write either of these:
+We will later argue that it is benefical to prove contracts for not
+only one function, but for any expression. This solves the first entry
+in the list above, and partially the second because then we could use
+a lambda instead of a new top-level declaration.
 
-\begin{code}
-unjust_flip = flip for fromJust
-                    ::: Pred (all isJust) --> CF
+However, by just extending the language of statements slightly we will
+solve the latter two. We will allow quantification and assumptions in
+statetements, so the contract can instead be written as this:
 
-unjust_lambda = \xs -> for xs fromJust
-                    ::: Pred (all isJust) --> CF
-\end{code}
+\[\begin{array}{rcl}
+\forall \; @p@ \; & . & \; (@p@ \in @CF@ \to @CF@) => \\
+@(++)@ & \in & \{ @xs@ \mid @CF@ \; \& \; @any p xs@ \} \\
+       & \to & \{ @ys@ \mid @CF@ \; \& \; @any p ys@ \} \\
+       & \to & \{ @rs@ \mid @CF@ \; \& \; @any p rs@ \}
+\end{array}\]
 
-And, indeed, we allow both of these, and we regard @for@ as being on
-top of the expression, susceptible for induction, on both examples
-above. How? In @unjust_flip@, we inline @flip@ since it is a
-non-recursive function that does not do case distinctions. Then we end
-up with the same as in the second example, @unjust_lambda@. We strip off the leading
-lambda(s), and then the top level @for@ is readily found.
+Thus, statements now contain these two extra constructs:
 
-\paragraph{Parameterised and partially applied contracts}
+\[\begin{array}{lrll}
+  s,t & ::=  & e \in C                     & \text{Contracts} \\
+      & \mid & \highlight{s => t}          & \text{Assumption} \\
+      & \mid & \highlight{\forall x @.@ s} & \text{Quantification} \\
+      & \mid & s \; \textsf{using} \; t    & \text{Reuse}
+\end{array}\]
 
-When combining these two techniques, we can express contracts
-reflexivity for a concrete equivalence function:
+The translation of statements can be viewed in
+Figure~\ref{fig:stmt-trans}.  Fixed point induction can now be
+expressed quite elegantly: for a statement $s$ susceptible to fixed
+point induciton over $f$, we now instead consider the statement
+$s[f^\circ/f] => s[f^\bullet/f]$.
 
-\begin{code}
-refl :: Nat -> Statement
-refl x = given (x ::: CF) $
-    x == x ::: CF :&: Pred (const True)
-\end{code}
-% $
+\begin{figure}\small
+\setlength{\arraycolsep}{2pt}
+\[\begin{array}{c}
+\ruleform{\trs{v}{s} = \formula{\phi}} \\ \\
+\begin{array}{lcl}
+  \trs{-}{e \in C}         & = & \trc{e \notin C} \\
+  \trs{+}{e \in C}         & = & \trc{e \in C} \\
+  \trs{-}{\forall x @.@ s} & = & \exists x @.@ \trs{-}{s} \\
+  \trs{+}{\forall x @.@ s} & = & \forall x @.@ \trs{+}{s} \\
+  \trs{-}{s => t}          & = & \trs{+}{s} \land \trs{-}{t} \\
+  \trs{+}{s => t}          & = & \trs{-}{s} \lor \trs{+}{t} \\
+  \trs{-}{s \; \textsf{using} \; t} & = & \trs{-}{s} \land \trs{+}{t} \\
+  \trs{+}{s \; \textsf{using} \; t} & = & \trs{+}{s} \\
+\end{array}
+\end{array}\]
+\caption{
+    The translation of statements in positive and negative
+    position. Right-nested uses of $\textsf{using}$ are assumed to be
+    removed.  \label{fig:stmt-trans}
+}
+\end{figure}
 
-Notice that the contract is for @x == x@, i.e. for the fully applied @(==)@.
-Induction is used to prove this contract.
+Another property describable with these statements is the one of
+associativity as a contract:
+
+\[\begin{array}{rcl}
+\forall \; @z@ \; . \; @z@ : @CF@ => @(+)@
+    & \in & ( @x@ \in @CF@ ) \to ( @y@ : @CF@ ) \to \\
+    &     & \{ @r@ \mid @CF@ \; \& \; @r + z == x + (y + z)@ \}
+\end{array}\]
+
+\subsection{Expressions, not Functions}
+
+If we lift the restriction that contracts is always accompanied by a
+function to let contracts express properties about general
+expressions, we get a richer language which can express this:
+
+\begin{enumerate}
+  \item Contracts that for functions that are partially applied:
+    $$@map fromJust@ \in \{ @xs@ \mid @all isJust xs@ \} \to @CF@$$
+
+  \item Repeated variables are allowed, allowing reflexivity and
+    idempotence:
+    \[\begin{array}{l}
+    \forall \; @x@ \; . @x@ \in @CF@ => @x == x@ \in \{ @b@ \mid @CF@ \; \& \; @b@ \} \\
+    \forall \; @x@ \; . @x@ \in @CF@ => @x && x@ \in \{ @b@ \mid @CF@ \; \& \; @b == x@ \}
+    \end{array}\]
+
+  \item Combined with assumptions, we can now express complex
+      properties such as symmetry:
+
+    \[\begin{array}{rcl}
+    \forall \; @x@ & . & @x@ \in @CF@ => \\
+    \forall \; @y@ & . & @y@ \in @CF@ => \\
+                   &   & @x == y@ \in \{ @b@ \mid @CF@ \; \& \; @b@ \} => \\
+                   &   & @y == x@ \in \{ @b@ \mid @CF@ \; \& \; @b@ \}    \\
+    \end{array}\]
+
+\end{enumerate}
+
+Fixed point induction will be applied to the function at the top of
+the rightmost (of $=>$s) statement if it is a recursive function. For
+the symmetry example, this means that we would do fixed point induction
+over @(==)@.
 
 \subsection{First order equality in contracts}
+\dr{This is not implemented, it is something to consider}
 
 The earlier example with associativity of @(++)@ was defined in terms
 of some equality function @(==)@. However, these are not very
