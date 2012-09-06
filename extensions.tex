@@ -235,7 +235,7 @@ Translated as follows:
 
 Where $neq$ is an apartness relation axiomatised in Figure~\ref{fig:neq-axioms}.
 
-\dr{If removing min, we can also remove neq by replace it to $\neq$}
+\dr{When making theories that do not use $min$, we can also remove $neq$ by replace it to $\neq$}
 
 \begin{figure}
 {\small
@@ -265,8 +265,61 @@ with @map fromJust@ above can be now instead be written:
 
 $$@map@ \in \{ @f@ \mid @f@ = @fromJust@ \} \to \{ @xs@ \mid @all isJust xs@ \} \to @CF@$$
 
-It is a bit clumsy, so we accept both versions.
+It is a bit clumsy, so we could accept both versions.
 
-\subsection{SMT 2.0 and triggers}
-\dr{I don't know where this section will fit}
-\paragraph{Support for primitive Integers}
+\subsection{Support for Integers}
+
+First Order Logic has built-in support for primitive data types found
+in Haskell. In this section we will focus specially on @Int@. One way
+to add support to reason about integers would be to axiomatise them
+for instance in unary or binary. However, some theorem provers do have
+built in support for it, one of them is @z3@, if you use the
+\textrm{SMTLIB} backend.
+
+The way @Int@s are treated in GHC makes a good translation: integers
+are explicitly boxed with a constructor @Int#@ which takes a primitive
+integer and returns an @Int@. This allows @Int@s to be @BAD@ and
+@UNR@, whereas their unboxed representation cannot. For instance,
+addition on @Int@ uses the unboxed int addition @+#@:
+
+\begin{code}
+  (+) = \x y -> case x of
+            Int# x0 -> case y of
+                Int# y0 -> Int# (x0 +# y0)
+\end{code}
+
+SMTLIB already does the distinction between @Int@, @Bool@, and user
+defined sorts, and we define a sort @D@ for our domain, and use @z3@'s
+@+@ operator for @+#@.
+
+This matches the rest of our translation as well, were we work on a
+domain $D_\infty$. The types of the boxing constructor and projector
+will be a bit different:
+
+\[\begin{array}{lcl}
+@Int#@   & : & \mathbb{Z} -> D_\infty \\
+@Int#@_0 & : & D_\infty -> \mathbb{Z}
+\end{array}\]
+
+Comparison operators like @<=# :: Int# -> Int# -> Bool@ have a counterpart
+in @z3@ which returns a @Bool@, which we want to inject to our domain @D@.
+This is done with a function @toBool :: Bool -> D@.
+
+An example contract involving reucrsion and @Int@ that we can prove is
+@c2@ below, and one that does not hold is @c1@:
+
+\begin{code}
+factorial :: Int -> Int
+factorial n
+    | n < 0     = error "Negative number!"
+    | n == 0    = 1
+    | otherwise = n * factorial (n - 1)
+
+c1 = factorial ::: CF --> CF
+c2 = factorial ::: CF :&: Pred (\x -> x>=0) --> CF
+\end{code}
+
+Unfortunately, @z3@ is not capable of finding countermodels of
+theories even when using the @min@ translation, so this means that we
+cannot get any feedback for contracts that uses integers and do not
+hold.
