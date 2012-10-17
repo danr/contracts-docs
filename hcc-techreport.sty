@@ -13,6 +13,7 @@
 \RequirePackage{mdwlist}
 \RequirePackage{textcomp} % for \sim
 \RequirePackage{verbatim} % for \sim
+\RequirePackage{rotating} % for \sim
 
 % Local packages
 \RequirePackage{code}
@@ -210,6 +211,5 @@
 % Need to put it somewhere before @ becomes active (\makeatactive)
 
 \newenvironment{restab}
-{\begin{tabular}{l | r@{.}l | r@{.}l | r@{.}l | r@{.}l }}
+{\begin{tabular}{l | r@{.}l | r@{.}l | r@{.}l | r@{.}l | l }}
 {\end{tabular}}
-
