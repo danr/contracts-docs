@@ -19,49 +19,49 @@
 
 \hline
 
-@ack@ $\CF$               &  \tol   & 0&04  &  0&03  &  \tot & 75 \\
-@all@ $\CF$               &  \tol   & 0&00  &  3&36  &  0&04 & 107 \\
-@(++)@ $\CF$              &  \tol   & 0&03  &  3&30  &  0&38 & 49 \\
-@concatMap@ $\CF$         &  \tol   & 0&03  &  6&60  &  \tot & 79 \\
-@length@ $\CF$            &  0&87   & 0&00  &  0&80  &  0&01 & 56 \\
+@ack@ $\CF$               &  \tol   & 0&04  &  0&03  &  \tot & 40 \\
+@all@ $\CF$               &  \tol   & 0&00  &  3&36  &  0&04 & 39 \\
+@(++)@ $\CF$              &  \tol   & 0&03  &  3&30  &  0&38 & 31 \\
+@concatMap@ $\CF$         &  \tol   & 0&03  &  6&60  &  \tot & 40 \\
+@length@ $\CF$            &  0&87   & 0&00  &  0&80  &  0&01 & 30 \\
 
-@(+)@ $\CF$               & 44&33   & 0&00  &  3&32  &  0&10 & 45 \\
-@(*)@ $\CF$               &  6&44   & 0&03  &  3&36  &  \tot & 60 \\
-@factorial@ $\CF$         &  6&69   & 0&02  &  4&18  & 31&04 & 64 \\
-@exp@ $\CF$               &  \tol   & 0&03  &  3&36  &  \tot & 68 \\
-@(*)@ accum $\CF$         &  \tol   & 0&03  &  3&32  &  \tot & 60 \\
-@exp@ accum $\CF$         &  \tol   & 0&04  &  4&20  &  0&12 & 80 \\
-@factorial@ accum $\CF$   &  \tol   & 0&03  &  3&32  &  \tot & 68 \\
+@(+)@ $\CF$               & 44&33   & 0&00  &  3&32  &  0&10 & 30 \\
+@(*)@ $\CF$               &  6&44   & 0&03  &  3&36  &  \tot & 36 \\
+@factorial@ $\CF$         &  6&69   & 0&02  &  4&18  & 31&04 & 40 \\
+@exp@ $\CF$               &  \tol   & 0&03  &  3&36  &  \tot & 41 \\
+@(*)@ accum $\CF$         &  \tol   & 0&03  &  3&32  &  \tot & 37 \\
+@exp@ accum $\CF$         &  \tol   & 0&04  &  4&20  &  0&12 & 42 \\
+@factorial@ accum $\CF$   &  \tol   & 0&03  &  3&32  &  \tot & 41 \\
 
-@reverse@ $\CF$           & 13&40   & 0&03  & 28&77  &  \tot & 66 \\
+@reverse@ $\CF$           & 13&40   & 0&03  & 28&77  &  \tot & 36 \\
 
 % Nats examples
 %@double@ $\CF$           &  0&20   & 0&02  &  1&39  &  0&01 & \\
 %@even@ $\CF$             & 17&47   & 0&00  &  0&01  &  0&00 & \\
 %@half@ $\CF$             & 39&03   & 0&00  &  3&90  &  0&08 & \\
 
-@(++)@/@any@ morphism     &  \tol   & 0&03  &  \tol  &  \tot & 141 \\
-@filter@ satisfies @all@  &  \tol   & 0&03  &  \tol  &  \tot & 107 \\
+@(++)@/@any@ morphism     &  \tol   & 0&03  &  \tol  &  \tot & 58 \\
+@filter@ satisfies @all@  &  \tol   & 0&03  &  \tol  &  \tot & 47 \\
 
 %@filter@ @all@ only pred &  \tol   & 0&02  &  \tol  &  \tot & \\
 
 %iterTree $\CF$           &  \tol   & 0&00  &  0&02  &  0&01 & \\
 %lefts $\CF$              &  4&88   & 0&00  &  3&31  &  0&02 & \\
 
-@iterate@ $\CF$           &  5&54   & 0&00  &  0&00  &  0&00 & 45 \\
-@repeat@ $\CF$            &  0&06   & 0&00  &  0&00  &  0&01 & 35 \\
+@iterate@ $\CF$           &  5&54   & 0&00  &  0&00  &  0&00 & 30 \\
+@repeat@ $\CF$            &  0&06   & 0&00  &  0&00  &  0&01 & 26 \\
 
-@foldr1@                  &  \tol   & 0&01  &  1&04  & 24&78 & 106 \\
-@head@                    & 18&62   & 0&00  &  0&00  &  0&01 & 66 \\
-@fromJust@                &  0&05   & 0&00  &  0&00  &  0&00 & 55 \\
+@foldr1@                  &  \tol   & 0&01  &  1&04  & 24&78 & 50 \\
+@head@                    & 18&62   & 0&00  &  0&00  &  0&01 & 42 \\
+@fromJust@                &  0&05   & 0&00  &  0&00  &  0&00 & 36 \\
 
 % risers                  &  \tol   & \tol  &  \tol  &  \tot & \\
-@risersBy@                &  \tol   & \tol  &  1&53  &  \tot & 166 \\
+@risersBy@                &  \tol   & \tol  &  1&53  &  \tot & 58 \\
 % @risersBy@ (@nonEmpty@) &  \tol   & 8&63  &  1&20  &  \tot & \\
 % This just looks stupid. Better get some inlining going
 
-@shrink@                  &  \tol   & 0&04  &  \tol  &  \tot & 180 \\
-@withMany@ $\CF$          &  \tol   & 0&00  &  \tol  &  \tot & 92 \\
+@shrink@                  &  \tol   & 0&04  &  \tol  &  \tot & 79 \\
+@withMany@ $\CF$          &  \tol   & 0&00  &  \tol  &  \tot & 39 \\
 
 \end{restab}
 \end{center}
