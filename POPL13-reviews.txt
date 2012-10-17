@@ -1,0 +1,398 @@
+===========================================================================
+                          POPL 2013 Review #171A
+                 Updated Friday 17 Aug 2012 5:37:10pm CEST
+---------------------------------------------------------------------------
+  Paper #171: HALO: From Haskell to First-Order Logic through Denotational
+              Semantics
+---------------------------------------------------------------------------
+
+                      Overall merit: A. Accept
+                          Expertise: X. Expert
+
+                         ===== Paper summary =====
+
+This paper is another contribution towards static verification of
+contracts.  The innovations of this paper are enabled by an
+observation that is unaccountably buried on page 4: Higher-order logic
+gives us the ability to reason about unknown functions, but to reason
+about contracts, we need only reason about lambda-expressions that
+already have concrete first-order representations.  Hence first-order
+logic is enough.
+
+With that insight in hand, going from a Haskell program to a
+first-order theory is relatively straightforward.  The soundness of
+the translation is established using old-fashioned order-theoretic
+denotational semantics (itself a novelty these days).
+
+The paper evaluates the performance of four theorem provers on the
+generated proof obligations for some "mostly-small" examples.  Z3
+proved most of the conditions in under 0.1 sec and timed out (60sec)
+on only one example; Vampire did all but 4 of the examples in 60
+secons, but much more slowly; the others did less well.
+
+The paper is also clear about the shortcomings of this approach, most
+notably contracts that do not hold typically lead to non-termination
+in the theorem prover.
+
+All in all, a very nice paper.
+
+                     ===== Comments for authors =====
+
+p 4, col 1, last sentence: "Luckily, the class of properties we reason
+about (contracts) never require us to do so."  As I said above, this
+is an important insight and should be highlighted in the
+introduction.  On the other hand, is this a formal claim?  If so, what
+is the proof?
+
+Fig 4: doesn't AxCfBU imply AxDisjBU ?
+
+Sec 3.6: cf(t), as defined in figure 4, is a purely syntactic
+characterization of crash-freedom.  Please say more about how this
+corresponds to the semantic notion of crash-freedom discussed in the
+first paragraph of this section.
+
+Theorem 4.1 "Although we have not presented a formal operational
+semantics, we state the usual soundness and adequacy results."
+Exactly what is being asserted here?  Have the authors written down an
+operational semantics and a proof of Theorem 4.1, both of which are
+omitted here for reasons of space and routineness?
+
+p 6, col 2.  I would love to have heard a little more about the use of
+minimal invariance here.
+
+p 7, col 2, 2nd bullet.  SAT => SMT
+
+p 9, col 1: The URL seems not to exist.  I poked around on
+github.com/danr, but couldn't figure out exactly what I should be
+looking at.
+
+p 9, Fig 7:  It would be helpful to include the size of each of the
+example programs and the size of the theory each generates.
+
+                     ===== Questions for authors =====
+
+page 7, "Lazy semantics simplifies the translation".  I can see that
+the FO theory for CBV would be different, but the differences seem minor:  is
+this anything worse than a small linear blowup in the size of the
+generated theory?  Would the resulting theories make the theorem
+provers perform much worse?
+
+===========================================================================
+                          POPL 2013 Review #171B
+                 Updated Friday 31 Aug 2012 4:12:44pm CEST
+---------------------------------------------------------------------------
+  Paper #171: HALO: From Haskell to First-Order Logic through Denotational
+              Semantics
+---------------------------------------------------------------------------
+
+                      Overall merit: B. Weak accept
+                          Expertise: X. Expert
+
+                         ===== Paper summary =====
+
+Deductive verification over a core lazy functional language (basically, GHC's Core language), where pre-/post-conditions are provided as contracts ( = boolean-valued expressions of the programming language).
+
+                     ===== Comments for authors =====
+
+I was delighted to see this paper, as we've been awaiting this kind of work for a long time.  While high-quality deductive program provers are available for "lesser" languages like Java, C# and C, functional languages lag behind in the deductive verification department.  It's nice to see serious work in this direction.
+
+The translation to first-order logic and its proof of correctness are clean and elegant, but unsurprising and not particularly difficult.  In the end, everything works out exactly as expected.
+
+Another strength of the paper is the experimental implementation in GHC.  While still at the prototype stage, it gives encouraging preliminary results.
+
+In its present state, the proposed approach has a number of limitations that I find regrettable:
+
+1- Crash-freedom is restricted to first-order data structures.  This feels strange for a higher-order functional language.  Especially since extending crash-freedom to function values appears straightforward, as discussed in section 7.
+
+2- Only call-by-name is handled, which implies no strict primitives such as integer arithmetic, no unboxed primitive types, etc.  This is going to be a major limitation in scaling this work up to Haskell or any realistic functional programming language.  (CBV can express CBN via a local encoding, but CBN requires CPS transformation to encode CBV.)  The discussion on p.7 explains why CBN leads to a simpler translation to FOL, but also outlines a translation of CBV that looks quite workable too.  I feel that this restriction to CBN only is a tremendous price (in lack of usability) to pay for such a minor simplification.
+
+3- No primitive support for arithmetic, as far as I could see.  (This is related to limitation #2, of course.)  That's a pity, since SMT solvers are very good with arithmetic, and type-based encoding of data structure invariants (phantom types, GADTs) are very bad with arithmetic.
+
+4- The semantics of {x | e} contracts is perfectly appropriate for dynamic checking, but has some "gotchas" for static checking that the authors might regret later.  For example, it's a minor surprise that BAD \in {x | True}, making it necessary to use the CF contract.  
+
+More importantly, I fear that the interpretation "if e' diverges, the contract is satisfied" will be problematic when combined with strict operations.  Consider:
+
+list2maybe [] = Nothing
+list2maybe (x:[]) = Just x
+list2maybe (x:y:z) = BAD
+
+Assuming an integer type with strict arithmetic, it seems that the following reasonable contract is *not* valid:
+
+list2maybe \in {x | length x <= 1 } -> CF
+
+because if we take x = 1 : 2 : omega, list2maybe x evaluates to BAD, but the precondition of the contract (length x <= 1) diverges while trying to compute "length x".
+
+However, if lazy Peano integers are used, "le (length x) (Succ Zero)" terminates on False, and the contract seems to become valid.  There is something troubling here.
+
+
+Finally, the discussion of related work omits two papers that are very relevant, although for strict functional languages:
+
+[A] Arthur Chargueraud: Characteristic formulae for the verification of imperative programs. ICFP 2011: 418-430
+
+[B] Yann Regis-Gianas, Francois Pottier: A Hoare Logic for Call-by-Value Functional Programs. MPC 2008: 305-335
+
+
+Minor comments:
+
+Fig. 1: contracts do not appear anywhere within programs?
+
+Page 7, top of column 2: "Ask a SAT solver ...".  Did you mean "a SMT solver"?  I doubt SAT is powerful enough for your needs.
+
+Page 8, example at bottom of column 1: the example is confusing because it isn't clear whether "=" and "\not =" refer to mathematical equality in the denotational model or to the programming language's equality function.  By the way, the latter is (again) one of those strict operations that I don't quite understand how you'd handle.
+
+                     ===== Questions for authors =====
+
+Q1: could you compare your work with [A] and [B], beyond the obvious "they do CBV and we do CBN"? 
+
+Q2: could you speculate on how you'd deal with strict primitives like arithmetic?
+
+Q3: in your opinion, is the interpretation "{x | e} is satisfied if e diverges" tenable in the long term?  I can't help but think that this interpretation is problematic in a static verification context.
+
+===========================================================================
+                          POPL 2013 Review #171C
+                Updated Saturday 1 Sep 2012 1:33:45pm CEST
+---------------------------------------------------------------------------
+  Paper #171: HALO: From Haskell to First-Order Logic through Denotational
+              Semantics
+---------------------------------------------------------------------------
+
+                      Overall merit: B. Weak accept
+                          Expertise: Y. Knowledgeable
+
+                         ===== Paper summary =====
+
+This paper aims to enable static verification of contracts for a lazy functional language (a subset of Haskell supplemented with a simple contract language). To do so, it defines a translation that axiomatizes the denotation of a given program in first-order logic, and likewise gives a corresponding interpretation of its contracts. The translation function is proved sound with respect to an actual denotational semantics, meaning that a generated formula is only satisfiable if all contracts are respected.
+
+The actual implementation in GHC handles all of Haskell and can invoke an off-the-shelf theorem prover to check satisfiability of the generated formula. Contracts are expressed through a dedicated library datatype and an annotation operator, both of which are interpreted by the translator. Notably, base contracts have the form of refinements {x | e} where e can be an arbitrary Haskell expression.
+
+                     ===== Comments for authors =====
+
+Pros:
+
+- Higher-order contracts with static checking would be a highly desirable feature for (typed) functional languages, and this paper is a step in that direction.
+
+- The translation given in the paper is relatively simple and understandable (mostly thanks to the absence of state).
+
+- I like that contract predicates can be arbitrary program expressions, and the verification logic takes care of proving that they are error-free and terminating.
+
+Cons:
+
+- The experimental implementation has only been tried on very small examples. It is not clear whether it scales to real programs (esp. ones that are heavy on non-trivial higher-order contracts).
+
+- I didn't see it mentioned anywhere in the paper whether the semantic translation is whole-program or not. Does the tool support modular reasoning, i.e., can one somehow annotate contracts on imports and check a module separately? I suppose, like with most automated verification approaches, this is not possible.
+
+- The authors couldn't resist rehashing the bogus old claim that reasoning about lazy languages is somehow simpler than about strict ones. That claim is not at all supported -- arguably, it's even contradicted -- by the presented work (see comments to the authors).
+
+Glossing over the last point, I think this paper is a nice step towards more comprehensive verification of functional programs. However, I see its contribution more on the design & engineering side. In terms of actual novelty in the theory department it isn't super impressive.
+
+                     ===== Questions for authors =====
+
+Abstract: "Even well-typed program can go wrong, by encountering a pattern match failure" -- I would reformulate this, since it depends on the type system. Those with a more intimate connection to type theory usually require exhaustive case inspection. (And indeed, you make the same assumption in your idealized language in Sec. 2.1)
+
+Sec 1: "It turns out that lazy programs (as opposed to strict ones!) have a very natural translation" -- please remove that sentence, it is highly questionable (see below).
+
+Sec 2.1: Can you explain briefly why it is more convenient to separate case from the rest of the expression language?
+
+Sec 2.2, informal meaning, first bullet: e[e'/x] -> e'[e/x]
+
+Fig 4: Axiom AxDisjC needs the extra condition "and K /= J" in the premise to make sense.
+
+Sec 4.1: In the type of bind, what does E range over? Is it an arbitrary domain? How can that be?
+
+Fig 6: In the definition of [[x | e]] you index [[e]] only by rho, missing a sigma.
+
+Sec 4.2, towards the end: misplaced paren in "Since [[P]]) ..."
+
+Sec 4.4, "Lazy semantics simplifies the translation...". That is a _very_ dubious claim. Don't be blind on your lazy eye! Both strategies introduce dual complications: a strict semantics would require an extra condition for functions, as you point out, but your non-strict semantics actually has a similar complication for 'case', i.e., extra conditions that wouldn't be necessary under strict semantics! This is closely related to Filinski's old observation that eager languages have no products, while lazy languages have no sums. And neither makes reasoning any simpler than the other.
+
+In fact, in a strict language, you don't need the whole business with crash-freeness CF to start with, because all values are crash-free! Moreover, induction on datatypes is simplified. So if anything, I'd actually claim that a lazy semantics _complicates_ matters here. So please reconsider your claim.
+
+Sec 4.5, Incremental verification: You describe three variations, but then... nothing. I would have liked to at least read a few thoughts on their relative trade-offs.
+
+Sec 5: "ordinary induction is not necessarily a valid proof principle [for lazy datatype]" -- Please clarify "necessarily". Plain structural induction _never_ is a valid proof principle for lazy datatypes. You _always_ need an additional finiteness assumption (on whose proof you will probably do the actual induction).
+
+Sec 5: Typos: "fixpoint induction s[c]heme" and "occurrence [of] some function".
+
+Sec 6.2: "we must first prove" -- does this imply some form of interactivity, or are you referring to adding annotations?
+
+Moreover, can you quantify somewhat how many auxiliary contract annotations the programmer "typically" needs to specify?
+
+Sec 8: typos "It treats does not include" and "to logic,a"
+
+===========================================================================
+                          POPL 2013 Review #171D
+                 Updated Friday 28 Sep 2012 9:11:06am CEST
+---------------------------------------------------------------------------
+  Paper #171: HALO: From Haskell to First-Order Logic through Denotational
+              Semantics
+---------------------------------------------------------------------------
+
+                      Overall merit: A. Accept
+                          Expertise: Y. Knowledgeable
+
+                         ===== Paper summary =====
+
+This paper allow verification of functional programs with
+contracts/predicates written within the program.
+
+                     ===== Comments for authors =====
+
+Overall, I enjoyed this paper. Much of the paper seems straightforward,
+from the translation of lazy programs with contracts to first-order
+logic formulas to the statement of soundness for the reduction.
+The novelty of the paper was in its proof of soundness, which 
+features an elegant and novel application of denotational semantics. 
+Certainly that proof technique is of interest to the PL community.
+The HALO tool for static contract-checking of Haskell programs shows
+the promise to the proposed approach, though the test suite used 
+seems limited to fairly small examples with simple contracts. 
+
+The remaining challenges seem to be ones of engineering- scaling the
+analysis, limiting divergence of the backend, etc. It's interesting
+that most of the tests are verified almost immediately or not within 
+the 60s time limit. Successes in contract-based verification of imperative
+languages should be helpful here; I would expect that many of the techniques
+used in e.g. Boogie would be useful in the functional setting as well.
+(Indeed, the authors have already found a connection between how both
+techniques handle induction).
+
+The entire contract-based approach to verification has a very ACL2
+feel to it, particularly using functions written in the language
+as predicates. The authors may wish to consider that tool as another
+source of inspiration, as it has been designed over 20+ years to 
+efficiently handle these sorts of verification tasks. Given that 
+it is also a semi-automated first-order theorem prover, ACL2
+is also a potential target for translation of the desugared Haskell
+programs, though I expect that the translation would have to be 
+altered to better take advantage of the full power of ACL2. 
+
+Specific comments:
+- page 3: the highlighting in Figure 3 disappears when printed.
+- page 7: not the case as we ---> not the case, as we 
+- page 8: I was not familiar with the TPTP file format
+- page 11: logic, a but ---> logic, but
+
+Some additional comments:
+
+- I found that the connection between T and K in the paper (and Figure 1)
+was weak. Please clarify.
+- In 2.2 the meaning of constraints is backwards: should be e'[e/x]
+- please define "saturated"
+- The syntax of {x|e} in Figure 1 appears as ((x:tau)|e'} in Figure 3 and
+   x|e in Figure 6
+- I am also interested to know why "Luckily, the class of properties 
+  we reason about (contracts) never require us to do so."
+- rehearse => repeat
+- Clarify how e is related to \Sigma and P in Theorem 4.3
+- Say more about why not= is problematic (notes after Theorem 5.2), 
+  or at least highlight it in the discussion.
+
+===========================================================================
+    Author's Response by Dimitrios Vytiniotis <dimitris@microsoft.com>
+  Paper #171: HALO: From Haskell to First-Order Logic through Denotational
+              Semantics
+---------------------------------------------------------------------------
+We would like to thank the reviewers for their comments that will help
+us improve the paper. We plan to expand related work, provide better
+insights on the use of minimal invariance, and address many more
+comments.
+
+Reviewers B and D point out that the translation and the proof of
+correctness is elegant and simple but relatively straightforward and
+unsurprising. We are happy that the translation into first order logic
+came over as straightforward, but do not agree that it is
+unsurprising. While it is folklore that one can translate a higher
+order program into first order logic, we have not seen a paper that
+explains how to make such a translation; furthermore the fact that the
+translation faithfully preserves all the properties of the program was
+non-obvious. For instance, the UNR case in pattern matching that
+catches ``ill-typed'' constructors, was not unsurprising to us, but is
+explained so elegantly by the uni-typed denotational semantics! We
+believe that formalising and justifying the translation is a
+substantial and useful contribution.
+
+Reviewer C is wondering whether the semantic translation supports
+modular reasoning. Yes, indeed! We can support modular reasoning with
+a function contract checked based only on the contracts of its free
+variables. Our implementation currently imports and uses both the
+definition and any already proved contracts of a function when trying
+to prove a new goal that uses this function, but it could as well only
+use the proved contracts, or even try to prove the goal w/o using any
+information about that function. That's mostly an engineering issue,
+not a technical one. But it is definitely NOT a whole-program analysis
+and contracts are not reproved at every call site of a function.
+
+Reviewers A and C bring up the CBV vs CBN translation: their point is
+well-taken, we should only say that the CBN translation produces
+simpler function definition equalities, and that alone does not inform
+much about the simplicity or performance of the whole theory. We will
+make this clear in the text.
+
+Reviewer B brings up the following issues:
+
+Q1) Related work on Characteristic Formulae (Chargueraud) and
+Hoare-logic VCC-based verification (Regis-Gianas & Pottier): The first
+work is interpreting a program as a higher-order predicate transformer
+whereas the second introduces a higher-order typed Hoare-logic and
+extracts verification conditions which are checked in Coq or an
+off-the shelf theorem prover. We aim to stay within the realm of
+first-order logic to exploit automation offered by the advances in FOL
+theorem provers and model checkers. At the same time we do lose
+expressivity, as our predicate language are only plain-old Haskell
+computable functions ... which on the other hand gives us
+admissibility practically for free even in the absense of /inductive/
+types. Admissibility does not hold by-default for arbitrary predicates
+that may involve higher-order quantification in the lack of inductive
+types, as is our setting. But even in the case of the previous work of
+Regis-Gianas and Pottier, positivity conditions have to be imposed on
+datatypes to make sure that the logical specification can be embedded
+in a logic built in CIC. A small final point about Regis-Gianas's work
+is that contract preconditions are enforced at every call site of a
+function, a design choice that we find appealing and might want to
+retrofit in our system, and is also used in Liquid types. We will
+definitely expand and explain these points in related work and we
+apologize for this omission in our submission.
+
+Q2) The reviewer is wondering how/if primitive theories would
+work. Supporting primitive theories of arithmetic works smoothly
+provided we are in a sorted theory of ints and denotations, and we
+have actually implemented this extension and tested on several
+examples, post-POPL, targeting Z3's SMT2 format. In short, the idea is
+that in Haskell, integers are really implemented as lifted versions of
+honest-to-goodness 32-bit integers:
+
+    data Int = Int# Int32
+
+and therefore the denotations of Int terms could either be bottom
+(UNR), or an actual integer (ignoring overflow etc) -- our translation
+exploits this. Moreover functions like addition on Int are defined as:
+
+   (+) (Int# i1) (Int# i2) = Int# (plus# i1 i2)
+
+where plus# is a 'primitive' addition on 32bit integers. Our
+translation simply maps these 'primitive' operators to primitive
+operators in the SMT theory and the lifting just works out of the box
+with no further modifications.
+
+We think of this paper as laying the semantic foundations for our tool
+and we plan to report on the above important extensions and more in
+subsequent work that we are preparing.
+
+Q3) Is the semantics of base predicates the right one? Admittedly,
+there does exist some play room and we have ourselves experimented
+with several variations. In this paper we have simply stayed close to
+the semantics of the original paper on contracts for Haskell but we
+acknowledge the reviewer's point and we have also identified some
+theoretical difficulties that are caused by contract preconditions
+which are 'stricter' than the function itself, in the process of
+working on the problems mentioned in the first paragraph of Section 7.
+Eventually we might consider modifying the semantics, motivated by
+practical convenience, however with this paper we now have a framework
+to actually justify these choices and modifications and reflect them
+to FOL.
+
+Finally, the right URL for the testsuite was:
+ https://github.com/danr/contracts/blob/master/testsuite/BigTestResults.md
+We had accidentally provided the wrong directory in the submission. 
+
+
