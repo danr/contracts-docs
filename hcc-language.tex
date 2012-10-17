@@ -253,7 +253,7 @@ Notice that $e'$ is an arbitrary expression
 (in our implementation, arbitrary Haskell expressions),
 rather than being restricted to some well behaved meta-language.  This
 is great for the programmer because the language and its library
-functions is familiar, but it poses a challenge for verification
+functions are familiar, but poses a challenge for verification
 because these expressions in contracts may themselves diverge or
 crash.
 \item $e \in (x:\Ct_1) \rightarrow \Ct_2$ means that whenever $e'$ satisfies $\Ct_1$, it
@@ -431,7 +431,7 @@ $e_1$ and $e_2$ are semantically equivalent.
 
 where $\etrans{}{}{e}$ is the translation of $e$ to a FOL term. That is, we can
 reason about the equality of Haskell terms by translating them into FOL, and then using
-a FOL theorem prover. The formal statement of this property is Corollary~\ref{cor:guiding-principle}
+a FOL theorem prover. The formal statement of this property is Corollary~\ref{cor:guiding-principle}.
 
 The translation of programs, definitions, and expressions to FOL
 is given in Figure~\ref{fig:etrans}.

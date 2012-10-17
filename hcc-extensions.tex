@@ -14,7 +14,8 @@ A naive approach would be to perform induction over the list argument of @length
 in Haskell datatypes may be lazy infinite streams and ordinary induction is not
 a valid proof principle. Fortunately, we can still appeal to {\em fixpoint induction}. The 
 fixpoint induction scheme that we use for @length@ above would be to {\em assume} that the 
-contract holds for the occurence some function @length_rec@ inside the body of its definition, 
+contract holds for the occurence of 
+some function @length_rec@ inside the body of its definition, 
 and then try to prove it for the function:
 \begin{code}
   length []     = Z 

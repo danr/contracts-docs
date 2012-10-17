@@ -42,7 +42,7 @@ also permits {\em finite models} generated from counterexample traces.
 %% These ideas are reminiscent to the techniques that the Nitpick \dv{IS this right?} tool
 %% uses for generating finite counterexamples in Isabelle. \dv{Someone please check!}.
 If the theory can guarantee the existence of a finite model in case of a counterexample,
-a finite model checker such as Paradox~\cite{paradox} will be able find it.
+a finite model finder such as Paradox~\cite{paradox} will be able find it.
 
 %% It is obviouly unacceptable for the system to go into a loop if
 %% the programmer writes a bogus contract, and we have promising
@@ -163,7 +163,7 @@ If the result of applying a function to any possible argument is crash-free then
 so is the function pointer. This allows us to go in the inverse direction as before, 
 and pass a function pointer to a function that expects a $\CF$ argument. However notice
 that this last axiom introduces a quantified assumption, which might lead to significant
-efficiency problem.
+efficiency problems.
 
 Ideally we would like to say that $\dbrace{\CF} = \dbrace{\CF \rightarrow \CF}$,
 but that is not quite true.  In particular, 
