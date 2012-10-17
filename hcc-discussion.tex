@@ -13,21 +13,20 @@ For example, consider the following definitions:
 Suppose that we would like to check the (false) contract:
    \[ @length@ \in \CF -> \{ x \mid @isZero@\;x\} \]
 \emph{A satisfiability-based checker 
-will simply diverge} trying to construct a counter model for the
+will diverge} trying to construct a counter model for the
 negation of the above query; we have confirmed that this is indeed the
-behaviour of several tools (Z3, Equinox, Eprover).  Why?  When a
+behaviour of several tools (Z3, Equinox, E).  Why?  When a
 counter-model exists, it will include tables for the function symbols
 in the formula. Recall that functions in FOL are total over the domain
 of the terms in the model. This means that function tables may be {\em
 infinite} if the terms in the model are infinite. Several (very
-useful!)  axioms such as the discrimination axioms \textsc{AxDisjC}
+useful!)  axioms, such as discrimination (\textsc{AxDisjC}),
 may in fact force the models to be infinite.
 
 In our example, the table for @length@ is indeed infinite since @[]@ is
 always disjoint from @Cons x xs@ for any @x@ and @xs@. Even if there
 is a finitely-representable infinite model, the theorem prover may
-search forever in the ``wrong corner'' of the model for a
-counterexample.
+search forever in the ``wrong corner'' of the model. 
 
 From a practical point of view this is unfortunate; it is not
 acceptable for the checker to loop when the programmer writes an
@@ -38,11 +37,11 @@ programmer needs to see the falsity of the contract.
 Addressing this problem is a challenging (but essential) 
 direction for future work, and we are currently 
 working on a modification of our theory that admits the denotational model, but 
-also permits {\em finite models} generated from counterexample traces.
+also permits {\em finite models} corresponding to counterexample traces.
 %% These ideas are reminiscent to the techniques that the Nitpick \dv{IS this right?} tool
 %% uses for generating finite counterexamples in Isabelle. \dv{Someone please check!}.
 If the theory can guarantee the existence of a finite model in case of a counterexample,
-a finite model finder such as Paradox~\cite{paradox} will be able find it.
+a finite model finder such as Paradox~\cite{paradox} will find it.
 
 %% It is obviouly unacceptable for the system to go into a loop if
 %% the programmer writes a bogus contract, and we have promising

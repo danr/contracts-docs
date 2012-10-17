@@ -8,10 +8,8 @@ semantics of programs does not appear to be well-explored in the literature.
 Catch~\cite{Mitchell:2008:PBE:1411286.1411293} is one of the very few tools that
 address the verification of lazy Haskell, and have been evaluated on real programs.
 Using static analysis, Catch can detect pattern match failures, and hence
-prove that a program cannot crash. Some annotations that describes the set of
-constructors that are expected as arguments to each function may be
-necessary for the analysis to succeed. 
-Our aim in this paper is to achieve similar goals, but 
+prove that a program cannot crash. Some annotations may be necessary for the 
+analysis to succeed. Our aim in this paper is to achieve similar goals, and
 moreover to be in a position to assert functional correctness.
 
 Liquid Types~\cite{Rondon:2008:LT:1375581.1375602} is an influential
@@ -28,18 +26,16 @@ that we have chosen, bad uses are allowed but the programmer gets no guarantees 
 \dv{Todo: Andrey Rybalchenko ``sausage factory''}
 
 Rather different to Liquid Types, Dminor~\cite{Bierman+:subtyping} allows 
-refinements to be written in the very same programming language that programs are written.
+refinements to be written in the very same programming language.
 Contrary to our case however, in Dminor
 the expressions that refine types must be pure --- that is, terminating --- and have a unique
 denotation (e.g. not depending on the store)\dr{what is the store?}. 
 Driven from a typing relation that includes
 logic entailment judgements, verification conditions are extracted and discharged automatically using Z3.
-Similar in spirit, other dependent type systems such
-as Fstar~\cite{fstar} also extract verification conditions that are discharged
-using automated tools
-or interactive theorem provers. Hybrid type systems such as Sage~\cite{Knowles+:sage}
-attempt to prove as many of the goals statically, and defer the rest as runtime
-goals.
+Similar in spirit, the Fstar~\cite{fstar} compiler also extracts verification conditions 
+that are discharged using Z3 or interactive theorem provers. Hybrid type systems such as 
+Sage~\cite{Knowles+:sage} attempt to prove as many of the goals statically, and defer the 
+rest as runtime tests.
 
 Boogie~\cite{boogie} is a verification back end that supports procedures as well as
 pure functions.  By using Z3, Boogie verifies
@@ -56,18 +52,15 @@ an approach to the verification of {\em first-order} and {\em call-by-value}
 recursive functional programs, which appears to be very efficient in practice.  It works
 by extending SMT with recursive programs and ``control literals'' that guide the pattern
 matching search for a counter-model, and is guaranteed to find a model if one exists
-(whereas that is not yet the case in our system, as we discussed earlier). It 
-treats does not include
-a $\CF$-analogous predicate, and no special treatment of the $\bot$
-value or pattern match failures seems to be in the scope of that project.
-However, it gives a very fast verification framework for partial functional correctness.
+(whereas that is not yet the case in our system, as we discussed earlier). It
+does not include a special treatment of the $\bot$ value nor pattern match failures 
+seem to be in the scope of that project, but rather partial functional correctness.
 
 The tool Zeno~\cite{zeno} verifies equational properties of functional
-programs using Haskell as a front end. Its proof search is based on
-induction, equality reasoning and operational semantics. While
-guaranteeing termination, it can also start new induction proofs
-driven by syntactic heuristics. However, it only considers the finite and total
-subset of values, and we want to reason about Haskell
+programs. Its proof search is based on induction, equality reasoning and 
+operational semantics. While guaranteeing termination, it can also start 
+new induction proofs driven by syntactic heuristics. However, it only considers 
+finite and total subsets of values, and we want to reason about Haskell
 programs as they appear in the wild: possibly non-terminating, with
 lazy infinite values, and run time crashes.
 
@@ -87,21 +80,19 @@ of the dependently typed programming language Agda in which proof
 obligations could be sent to an automatic first-order
 prover \cite{AgdaFOL}. Both of these use a translation from a
 typed higher-order language of well-founded definitions to first-order
-logic. The work in this area that comes very close to ours, in
+logic. A work that comes very close to ours, in
 that they deal with a lazy, general recursive language with partial
 functions, is by \citet{TypeTheoryFOL}, who use Agda as a logical
 framework to reason about general recursive functional programs, and
-combine interaction in Agda with automated proofs in first-order
-logic.
+combine interaction in Agda with automated proofs in FOL.
 
-There exists also work on translating the semantics of programs or some of
-their properties in higher-order logics, such as the calculus of inductive
-constructions, for instance the work on Characteristic Formulae~\cite{char-form} 
+There exists more work on translating the semantics of programs or their properties in 
+higher-order logics (e.g. CIC), for instance the work on Characteristic Formulae~\cite{char-form} 
 and the work on Hoare-logic VCC-based verification~\cite{regis-gianas-pottier-08}. The former
 is interpreting a program as a higher-order predicate transformer
 whereas the latter introduces a higher-order typed Hoare-logic and
-extracts verification conditions which are checked in Coq or an
-off-the shelf theorem prover. We aim to stay within the realm of
+extracts verification conditions which are proved interactively in Coq or with 
+an automated theorem prover. We aim to stay within the realm of
 first-order logic to exploit automation offered by the advances in FOL
 theorem provers and model finders. At the same time we do lose
 expressivity, as our predicate language are only plain-old Haskell
@@ -110,14 +101,11 @@ admissibility practically for free even in the absense of inductive
 types. But even in the case of the previous work of
 R\'{e}gis-Gianas and Pottier, positivity conditions have to be imposed on
 datatypes to make sure that the logical specification can be embedded
-in a logic built in CIC. A final point about that work
-is that contract preconditions are enforced at every call site of 
-a function, a design choice that we find appealing and might want 
-to retrofit in our system, and one that also appears in Liquid types.
-In the higher-order logic world, the recent work of 
-Huffman~\cite{Huffman:2012:FVM:2364527.2364532} can be used to translate Haskell 
-programs and reason about their semantics in HOLCF; the main application being
-the verification of properties of monad transformers.
+in a logic built in CIC. Like Liquid types, that work enforces contract
+preconditions in all call sites. Finally, in the higher-order logic world, the 
+recent work of Huffman~\cite{Huffman:2012:FVM:2364527.2364532} can be used to 
+translate Haskell programs and reason about their semantics in HOLCF; the main 
+application being the verification of monad transformers.
 
 The previous work on static contract checking for Haskell~\cite{xu+:contracts}
 was based on {\em wrapping}. A term was effectively wrapped
@@ -134,22 +122,20 @@ Furthermore, the logicization of programs is dependent on whether
 the resulting formula is going to be used as a goal or assumption in a proof. 
 Improving Xu's work, Tobin-Hochstadt and Van Horn~\cite{hochstadt-horn} propose
 a system in the same space of symbolic execution but they enrich the 
-language of contracts to arbitrary potentially divergent or crashing functions.
-We believe that the approach proposed in this paper, which is to directly 
+language of contracts to handle arbitrary, potentially divergent or crashing functions.
+We believe that our approach, which is to directly 
 encode the semantics of programs, might be simpler to specify and reason about.
 That said, symbolic execution has the advantage of querying a
-theorem prover on many small goals as symbolic execution proceeds, instead of a
-single verification goal in the end. We have some ideas about how to break large
-contract negation satisfiability queries to smaller ones, guided by the symbolic 
-evaluation of a function, and we consider integrating this methodology in our tool.
+theorem prover on many small goals, instead of a
+single big goal. We have some ideas about how to break large
+satisfiability queries to smaller ones, guided by the symbolic 
+evaluation of functions, and we consider integrating this methodology.
 
 Finally, higher-order model checking~\cite{koba-ppdp09,koba-popl09} aims at verifying
 properties about the execution of functional programs (for instance it can also verify
 temporal properties of programs) based on a translation of programs to higher-order 
-recursion schemes that generate potential execution trees, and the use of algorithms 
-that can decide properties on these trees. Higher-order model checking is an area of 
-active research aiming to improve the efficiency and applicability of the original 
-approach.
+recursion schemes. Higher-order model checking is an area of active research, aiming to 
+improve the efficiency and applicability of the original approach.
 
 %% \begin{itemize}
 %%   \item Contracts in general (Findler Felleisen etc)

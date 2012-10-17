@@ -319,7 +319,7 @@ viewed in Figure~\ref{fig:unsres}. Our full testsuite and tables can be download
 \url{https://github.com/danr/contracts/blob/master/tests/BigTestResults.md}.
 \dv{Is this right? How many examples did we evaluate on? 10? 20? 300? is it important?}
 The test cases include:
-\begin{itemize}
+\begin{itemize*}
   \item Crash-freedom of standard functions
     (@(++)@, @foldr1@, @iterate@, @concatMap@).
 
@@ -338,7 +338,7 @@ The test cases include:
 
   \item Some non-trivial post-conditions, such as the example above with @filter@ and @all@,
         and also $@any p xs || any p ys@ = @any p (xs ++ ys)@$.
-\end{itemize}
+\end{itemize*}
 
 We tried four theorem provers, Equinox, Z3, Vampire and E, and gave
 them 60 seconds for each problem. For our problems, Z3 seems to be the most

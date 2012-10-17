@@ -246,7 +246,7 @@ many programs and exhibit the interesting theoretical and practical problems.
 We write $e \in C$ to mean ``the expression $e$ satisfies the contract $C$'', and similarly
 for functions $f$.  We will say what contracts mean formally in
 Section~\ref{s:den-sem-contracts}.  However, here is their informal meaning:
-\begin{itemize}
+\begin{itemize*}
 \item $e \in \{x | e'\}$ means that $e$ does not evaluate to a value
   or $e'[e/x]$ evaluates to @True@ or does not evaluate to a value.
 Notice that $e'$ is an arbitrary expression
@@ -261,14 +261,14 @@ is the case that $(e\,e')$ satisfies $\Ct_2[e'/x]$.
 \item $e \in \Ct_1 \& \Ct_2$ means that $e$ satisfies both $\Ct_1$ and $\Ct_2$.
 \item $e \in \CF$ means that $e$ is \emph{crash free}; that is $e$ does not
 crash regardless of what context it is plugged into (see Section~\ref{s:cf-fol}).
-\end{itemize}
+\end{itemize*}
 
 % -----------------------------------------------------------------
 \section{Translating $\theLang$ to first-order logic} \label{ssect:trans-fol}
 
 Our goal is to answer the question ``does expression $e$ satisfy
 contract $C$?''.  Our plan is to translate the expression and the
-contract into a first-order logic (FOL) term and formula respectively, and get a standard 
+contract into a first-order logic (FOL) term and formula respectively, and get an 
 FOL prover to do the heavy lifting. In this section we formalise our translation, 
 and describe how we use it to verify contracts.
 
@@ -316,7 +316,7 @@ syntactic constructs $\unr$ and $\bad$. As an abbreviation we often use
 $app(t,\ol{s})$ for the sequence of applications to each $s_i$, as
 Figure~\ref{fig:fol-image} shows.
 
-A formula $\phi$ in Figure~\ref{fig:fol-image} is just a first-order logic
+A formula $\phi$ in Figure~\ref{fig:fol-image} is just a FOL
 formula, augmented with a predicate $\lcf{t}$ for crash-freedom, which
 we discuss in Section~\ref{s:cf-fol}.
 
@@ -512,7 +512,7 @@ a call of @map@ itself.
 
 The second equation for $\utrans{}{u}{s}$ in Figure~\ref{fig:etrans} deals with
 @case@ expressions, by generating a conjunction of formulae, as follows:
-\begin{itemize}
+\begin{itemize*}
 \item If the scrutinee $t$ is $bad$ (meaning that evaluating it invokes @BAD@) then
 the result $s$ of the @case@ expression is also $bad$.  That is, @case@ is strict in
 its scrutinee.
@@ -524,7 +524,7 @@ The bit before the implication $\Rightarrow$ is just the
 negation of the previous preconditions; the formula
   $t{\neq}K_1(\oln{{\sel{K}{1}}(t)}{})$
 is the clumsy FOL way to say ``$t$ is not built with constructor $K_1$''.
-\end{itemize}
+\end{itemize*}
 Why do we need the last clause? Consider the function @not@:
 \begin{code}
   not :: Bool -> Bool
@@ -544,7 +544,7 @@ or divergent.
 
 Of course, we also need to axiomatise the behaviour of data constructors and
 selectors, which is done in Figure~\ref{fig:data-cons}:
-\begin{itemize}
+\begin{itemize*}
 \item \textsc{AxDisjCBU} explains that a term headed by a data constructor cannot
 also be $bad$ or $unr$.
 \item \textsc{AxInj} explains how the selectors $\sel{K}{i}$ work.
@@ -552,7 +552,7 @@ also be $bad$ or $unr$.
 There are a quadratic number of such axioms, which presents a scaling problem.
 For this reason FOL provers sometimes offer a built-in notion of data constructors,
 so this is not a problem in practice, but we ignore this pragmatic issue here.
-\end{itemize}
+\end{itemize*}
 A small point is that \rulename{AxCfBU} actually implies \rulename{AxDisjBU} but for 
 presentational reasons we keep both axioms.
 
