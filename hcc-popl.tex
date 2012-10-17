@@ -1,10 +1,17 @@
-\documentclass[preprint,nocopyrightspace]{sigplanconf}
+\documentclass{sigplanconf}
 
 \usepackage{hcc-techreport}
 
 
 \begin{document} 
-\preprintfooter{\textbf{--- DRAFT ---}}
+%% \preprintfooter{\textbf{--- DRAFT ---}}
+
+
+\conferenceinfo{POPL'13,} {January 23--25, 2013, Rome, Italy.}
+\CopyrightYear{2013}
+\copyrightdata{978-1-4503-1832-7/13/01}
+
+
 
 \renewcommand{\textfraction}{0.1}
 \renewcommand{\topfraction}{0.95}
@@ -114,6 +121,15 @@ all justified by denotational semantics. This translation enables us to prove
 that functions satisfy their contracts using an off-the-shelf first-order logic
 theorem prover.
 \end{abstract}
+
+\category{D.3}{Software}{Applicative (functional) languages}
+
+\terms
+verification, languages
+
+\keywords
+static contract checking, first-order logic
+
 
 \section{Introduction}\label{s:intro}
   \input{hcc-introduction}
