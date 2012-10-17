@@ -75,8 +75,8 @@ The following continuous functions also exist:
 % , each being the inverse of the
 % other (i.e. composing to the identity function on the corresponding cpo):
 \[\begin{array}{rcl}
-  \retK   & : & D =>_c D_\bot \\
-  \bindK_{f : D =>_c E_\bot} & : & D_\bot =>_c E_\bot \\
+  %% \retK   & : & D =>_c D_\bot \\
+  %% \bindK_{f : D =>_c E_\bot} & : & D_\bot =>_c E_\bot \\
   \rollK & : & (V_{\infty})_\bot =>_c D_{\infty} \\
   \unrollK & : &D_{\infty} =>_c (V_{\infty})_\bot
 \end{array}\]
@@ -232,8 +232,8 @@ the definition with pattern matching notation
 $\dapp(d,a)$ (instead of using $\pi_1$ for projecting
 out $d$ and $\pi_2$ for projecting out $a$) but that is fine,
 since $\times$ is not a lifted construction.
-Also note that we are, as advertised, suppressing uses
-of $\bindK$, $\rollK$, etc.
+%% Also note that we are, as advertised, suppressing uses
+%% of $\bindK$, $\rollK$, etc.
 }:
 {\setlength{\arraycolsep}{2pt}
 \[\begin{array}{rcll}
@@ -263,7 +263,7 @@ be read recalling its syntax in Figure~\ref{fig:syntax}.
 Since $\dbrace{P})$ is continuous, its limit exists and is an element of the
 cpo $\FVarCpo =>_c D_{\infty}$.
 
-\begin{definition}
+\begin{definition}\label{def:abbreviation}
 We will refer to the limit of the $\dbrace{P}$ as $\dbrace{P}^{\infty}$ in what follows.
 Moreover, to reduce notational overhead below, for a program with no free variables we
 will use notation $\dbrace{e}$ to mean $\interp{e}{\dbrace{P}^\infty}{\cdot}$, and
@@ -295,15 +295,14 @@ soundness and adequacy results:
 Assume $\Sigma |- P$ and $u$ with no free term variables. Then (i)~if $P |- u \Downarrow v$ then $\dbrace{u} = \dbrace{v} $; and (ii)~if $\unroll{\dbrace{e}} \neq \bot$, then
 $\exists v$ such that $P |- e \Downarrow v$.
 \end{theorem}
-\begin{comment}
-The proof of this theorem is also standard domain theory so we only sketch the
+% \begin{comment}
+The proof of adequacy is routine domain theory so we only sketch the
 high-level road-map: The proof proceeds by defining a {\em logical relation} between
-semantics and syntax, via the use of a bi-functor on admissible relations between elements
-of $D_\infty$ and closed expressions, and using minimal
-invariance~\cite{pitts-rel-domains} to show that this
-bi-functor has a fixpoint. Adequacy then follows from the {\em fundamental theorem} of this
-logical relation, which asserts that every expression is related to its denotation.
-\end{comment}
+semantics and syntax, via the use of a bi-functor on admissible relations between 
+elements of $D_\infty$ and closed expressions~\cite{pitts-rel-domains}. Adequacy 
+then follows from the {\em fundamental theorem} of this logical relation, which asserts 
+that every expression is related to its denotation.
+% \end{comment}
 %% To do this we define a {\em logical relation} first between semantics
 %% and syntax. Let $Rel \subseteq D_\infty \times Expr$ be the space of
 %% {\em admissible} and {\em equality-respecting} relations between
@@ -505,12 +504,19 @@ here we can do better because we are working with elements of $D_\infty$. Using
 techniques developed by Pitts~\cite{pitts-rel-domains} we can define crash-freedom denotationally as the greatest solution
 \dr{The greatest solution should be $D^{\infty}$? Don't you mean the smallest solution?}
 to the recursive equation for $F_{\lcfZ}^{\infty}$ in Figure~\ref{f:den-sem-contracts}. Technically,
-since the equation involves mixed-variance recursion, to show that such a fixpoint exists we have
-to use minimal invariance.
-In addition we get the following, which will be useful later on for induction:
+since the equation involves mixed-variance recursion, to show that such a fixpoint 
+exists we have to use minimal invariance. Minimal invariance can be used
+with strict bi-functors to show that every element in the ``negative'' fixpoint
+of a bi-functor is contained in the ``positive'' fixpoint, by constructing a sequence of 
+approximations whose limit is the identity (this {\em is} the minimal invariance property),
+and showing that every approximation of that element is contained in the 
+positive fixpoint. Admissibility does the rest.
+
+Hence the definition $F_{\lcfZ}^{\infty}$ is well-formed; in addition 
+the following is true and will be useful later on for induction:
 \begin{lemma}\label{lem:cf-admissible}
-$\bot \in F_{\lcfZ}$ and $F_{\lcfZ}^{\infty}$ is admissible, that is if all elements of a chain are in
-$F_{\lcfZ}^{\infty}$ then so is its limit.
+$\bot \in F_{\lcfZ}^{\infty}$ and $F_{\lcfZ}^{\infty}$ is admissible, that is, 
+if all elements of a chain are in $F_{\lcfZ}^{\infty}$ then so is its limit.
 \end{lemma}
 
 %% Using the techniques developed by Pitts we may define a recursive predicate for crash-freedom,
@@ -592,7 +598,9 @@ The essential soundness theorem that states that our interpretation makes sense 
 the following.
 \begin{theorem}[Interpretation respects denotations]\label{thm:interp-respect}
 Assume that $\Sigma |- P$ and expression $e$ does not contain any free variables.
-Then, if $\etrans{}{\cdot}{e} = t$ then $\linterp{t} = \dbrace{e}$.
+Then, if $\etrans{}{\cdot}{e} = t$ 
+then $\linterp{t} = \dbrace{e}$. (Recall that notation $\dbrace{e}$ abbreviates 
+the semantics of $e$ in the program $P$, see Definition~\ref{def:abbreviation})
 \end{theorem}
 The proof is an easy induction on the size of the term $e$.
 
@@ -651,13 +659,14 @@ For instance, here are some admissible axioms that are valid:
 These axioms assert that partial applications cannot be equated to
 any constructor, $\bot$ nor $\injBad$. If the reader is worried that without a
 complete formalisation of all equalities of $D_\infty$ it is impossible to prove any
-programs correct, we would like to reassure them that that is not the case as we
+programs correct, we would like to reassure them that that is not the case, as we
 shall see in the next section.
 
-\paragraph{Lazy semantics simplifies the translation}
+\paragraph{The translation and lazy vs strict semantics}
+
 We have mentioned previously (Section~\ref{ssect:trans-exprs}) that the 
-laziness of $\theLang$ helps in keeping the translation simple, and here we 
-explain why. 
+translation that we have presented is only valid in a call-by-name setting, 
+and here we explain why. 
 
 Whenever we use universal quantification in the logic, we really quantify over
 {\em any} denotation, including $\bot$ and $\injBad$. In a call-by-name language, 
@@ -671,9 +680,6 @@ Moreover, the axioms for the $app(\cdot,\cdot)$ combinator have to be modified
 to perform checks that the argument is not $\bot$ or $\injBad$ before actually 
 calling a function.   In a call-by-name language these guards are needed 
 only for @case@ and the function part of $app$.
-
-These complications lead to a more complex first-order theory in the call-by-value 
-case.
 
 %% value, including $\bot$. Very rarely do we have to add a condition that
 %% a value is not equal to $\bot$. Only when a function is explicitly strict in a particular argument (by doing pattern matching) do we have to do this. Also, function application in the language corresponds directly to term construction in the logic.

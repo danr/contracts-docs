@@ -1,0 +1,156 @@
+From reviewer D:
+~~~~~~~~~~~~~~~~
+
+- ACL2 related work
+
+- HO model checking related work
+
+
+- I am also interested to know why "Luckily, the class of properties 
+  we reason about (contracts) never require us to do so."
+     DV: I removed that paragraph alltogether because it was even confusing myself!
+
+- page 3: the highlighting in Figure 3 disappears when printed.
+     DV: Removed highlight alltogether, it was not helping much.
+- page 7: not the case as we ---> not the case, as we 
+     DV: fixed
+- page 8: I was not familiar with the TPTP file format
+     DV: added small footnote
+- page 11: logic, a but ---> logic, but
+     DV: fixed
+
+Some additional comments:
+
+- I found that the connection between T and K in the paper (and Figure 1)
+  was weak. Please clarify.
+    DV: added a sentence in the syntax section.
+- In 2.2 the meaning of constraints is backwards: should be e'[e/x]
+    DV: fixed.
+- please define "saturated"
+    DV: fixed
+- The syntax of {x|e} in Figure 1 appears as ((x:tau)|e'} in Figure 3 and
+  x|e in Figure 6
+    DV: fixed.
+- rehearse => repeat
+    DV: fixed
+- Clarify how e is related to \Sigma and P in Theorem 4.3
+    DV: fixed
+- Say more about why not= is problematic (notes after Theorem 5.2),
+  or at least highlight it in the discussion.
+    DV: I do not know what to say more, doing nothing.
+
+
+From reviewer C:
+~~~~~~~~~~~~~~~~
+- Whole-program analysis
+     DV: fixed
+
+- Call-by-name vs call-by-value
+     DV: fixed
+
+Abstract: "Even well-typed program can go wrong, by encountering a pattern match failure" -- I would reformulate this, since it depends on the type system. Those with a more intimate connection to type theory usually require exhaustive case inspection. (And indeed, you make the same assumption in your idealized language in Sec. 2.1)
+     DV: I added "Even w/t programs can go wrong in many modern functional languages, by ..."
+
+Sec 2.1: Can you explain briefly why it is more convenient to separate case from the rest 
+of the expression language?
+    DV: I added a 'notationally' qualifier.
+
+Sec 2.2, informal meaning, first bullet: e[e'/x] -> e'[e/x]
+    DV: fixed
+
+Fig 4: Axiom AxDisjC needs the extra condition "and K /= J" in the premise to make sense.
+    DV: fixed
+
+Sec 4.1: In the type of bind, what does E range over? Is it an arbitrary domain? 
+How can that be?
+    DV: I removed some more functions.
+
+Fig 6: In the definition of [[x | e]] you index [[e]] only by rho, missing a sigma.
+    DV: no this is actually right, since sigma is implicit by Def 4.1. Not doing anything
+
+Sec 4.2, towards the end: misplaced paren in "Since [[P]]) ..."
+    DV:fixed
+
+Sec 4.5, Incremental verification: You describe three variations, but then... nothing. I would have liked to at least read a few thoughts on their relative trade-offs.
+    DV:fixed
+
+Sec 5: "ordinary induction is not necessarily a valid proof principle [for lazy datatype]" -- Please clarify "necessarily". Plain structural induction _never_ is a valid proof principle for lazy datatypes. You _always_ need an additional finiteness assumption (on whose proof you will probably do the actual induction).
+   DV: removed 'necessarily'
+
+Sec 5: Typos: "fixpoint induction s[c]heme" and "occurrence [of] some function".
+  DV: Fixed
+
+Sec 6.2: "we must first prove" -- does this imply some form of interactivity, or are you referring to adding annotations?
+
+Moreover, can you quantify somewhat how many auxiliary contract annotations the programmer "typically" needs to specify?
+  DV: I am unsure what to do about this. Doing nothing.
+
+Sec 8: typos "It treats does not include" and "to logic,a"
+  DV: fixed
+
+
+From reviewer B:
+~~~~~~~~~~~~~~~~
+Fig. 1: contracts do not appear anywhere within programs?
+  DV: doing nothing.
+
+Page 7, top of column 2: "Ask a SAT solver ...".  Did you mean "a SMT solver"?  I doubt SAT is powerful enough for your needs.
+  DV: changed to FOL theorem prover
+
+Page 8, example at bottom of column 1: the example is confusing
+because it isn't clear whether "=" and "\not =" refer to mathematical
+equality in the denotational model or to the programming language's
+equality function.  By the way, the latter is (again) one of those
+strict operations that I don't quite understand how you'd handle.
+
+  DV: Added a clarification that this is logical inequality.
+
+
+                     ===== Questions for authors =====
+
+Q1: could you compare your work with [A] and [B], beyond the obvious "they do CBV and we do CBN"? 
+  DV: Fixed
+
+
+From reviewer A:
+~~~~~~~~~~~~~~~~
+p 4, col 1, last sentence: "Luckily, the class of properties we reason
+about (contracts) never require us to do so."  As I said above, this
+is an important insight and should be highlighted in the
+introduction.  On the other hand, is this a formal claim?  If so, what
+is the proof?
+
+    DV: I removed that part altoghether because if confused the reviewers and myself.
+
+Fig 4: doesn't AxCfBU imply AxDisjBU ?
+    DV: Yes, I added a comment there.
+
+Sec 3.6: cf(t), as defined in figure 4, is a purely syntactic
+characterization of crash-freedom.  Please say more about how this
+corresponds to the semantic notion of crash-freedom discussed in the
+first paragraph of this section.
+   DV: doing nothing.
+
+Theorem 4.1 "Although we have not presented a formal operational
+semantics, we state the usual soundness and adequacy results."
+Exactly what is being asserted here?  Have the authors written down an
+operational semantics and a proof of Theorem 4.1, both of which are
+omitted here for reasons of space and routineness?
+   DV: Yes. Said that.
+
+p 6, col 2.  I would love to have heard a little more about the use of
+minimal invariance here.
+    DV: fixed.
+
+p 7, col 2, 2nd bullet.  SAT => SMT
+    DV: Fixed.
+
+p 9, col 1: The URL seems not to exist.  I poked around on
+github.com/danr, but couldn't figure out exactly what I should be
+looking at.
+    DV: Dan will fix.
+
+p 9, Fig 7:  It would be helpful to include the size of each of the
+example programs and the size of the theory each generates.
+    DV: Dan will fix.
+

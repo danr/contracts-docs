@@ -77,7 +77,11 @@ $d' \in \dbrace{\Ct_1}$, it is the case that
 $\dapp(\dbrace{e},d') \in \dbrace{\Ct_2}_{x |->d'}$. 
  
 Alas there are {\em more} denotations than images of terms in $D_{\infty}$,
-and that breaks the correspondence. Consider the program:
+and we can easily show that the correspondence breaks, exploiting the infamous
+{\em parallel-or} function as a test. We omit the details due to lack of space.
+
+\begin{comment}
+ Consider the program:
 \begin{code}
   loop = loop
 
@@ -121,6 +125,7 @@ contract operationally but not denotationally, because of the usual
 loss of full abstraction: there are more tests than programs in the denotational world. 
 Due to contra-variance
 we expect that the other inclusion will fail too. 
+\end{comment}
 
 This is not a serious problem in practice.
 After all the two definitions mostly coincide, and

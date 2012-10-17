@@ -23,7 +23,7 @@ Hence, to verify a program $e$ satisfies a contract $\Ct$ we need to do the foll
 \begin{itemize}
   \item Generate formulae for the theory $\Th\;\land\;\ptrans{}{P}$
   \item Generate the negation of a contract translation: $\neg\ctrans{\Sigma}{P}{e \in \Ct}$
-  \item Ask a SAT solver for a model for the conjunction of the above formulae
+  \item Ask a FOL theorem prover for a model for the conjunction of the above formulae
 \end{itemize}
 
 \paragraph{Incremental verification}
@@ -57,6 +57,14 @@ We may consider the following three variations of how to do this:
         Via a similar reasoning as before, such an invocation 
         is sound as well.
 \end{itemize}
+
+Icremental verification essentially implies that our approach does not require a 
+whole-program analysis: once a contract is proved about a function, it can be assumed, 
+even if the definition of the function is not exported, and subsequently used to prove
+contracts of other functions that may call it. Exporting only the contract but not a 
+definition of a function can be beneficial for efficiency reasons when verifying further
+goals; the drawback is that the exported contracts might not be precise enough for proving
+these further goals. Our framework supports any of those strategies.
 
 
 %% Our final goal is going to show that a program does not crash, that

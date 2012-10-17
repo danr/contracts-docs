@@ -11,9 +11,9 @@ In the second case we need to show that the result of @length xs@ is crash-free 
 have this information so the proof gets stuck, often resulting in the FOL-solver looping. 
 
 A naive approach would be to perform induction over the list argument of @length@ -- however
-in Haskell datatypes may be lazy infinite streams and ordinary induction is not necessarily 
+in Haskell datatypes may be lazy infinite streams and ordinary induction is not
 a valid proof principle. Fortunately, we can still appeal to {\em fixpoint induction}. The 
-fixpoint induction sheme that we use for @length@ above would be to {\em assume} that the 
+fixpoint induction scheme that we use for @length@ above would be to {\em assume} that the 
 contract holds for the occurence some function @length_rec@ inside the body of its definition, 
 and then try to prove it for the function:
 \begin{code}
@@ -22,7 +22,7 @@ and then try to prove it for the function:
 \end{code}
 
 Formally, our induction scheme is:
-\begin{definition}[Induction sheme]\label{def:induction}
+\begin{definition}[Induction scheme]\label{def:induction}
 To prove that $\dbrace{g} \in \dbrace{\Ct}$ for a function 
 $g\;\as\;\ol{x{:}\tau} = e[g]$ (meaning $e$ contains
 some occurrences of $g$), we perform the following steps:
@@ -76,7 +76,9 @@ Haskell definition:
   f Z     = [0]
 \end{code}
 Let us try to check if the $\forall x @.@ @f@(x) \neq @ones@$ is true in 
-the denotational model, using fixpoint induction. The case for $\bot$ holds, 
+the denotational model, using fixpoint induction. Importanttly, by $\neq$ here we 
+really mean the negation of logical equality -- {\em not} a Haskell
+function that computes a @Bool@. The case for $\bot$ holds, 
 and so does the case for the @Z@ constructor. For the $@S@\;x$ case, we can 
 assume that $@f@(x) \neq @ones@$ and we can easily prove that this implies that
 $@f@(@S@\;x) \neq @ones@$. Nevertheless, the property is {\em not true} -- just pick 

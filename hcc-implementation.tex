@@ -79,7 +79,8 @@ definitions of @head@, @not@, and @null@,
 then we can run @halo Head.hs@. 
 The @halo@ program translates the contract and the supporting function
 definitions into
-FOL, generates a TPTP file, and invokes a theorem prover.
+FOL, generates a TPTP~\footnote{A  widely supported format for FOL, see~\url{www.cs.miami.edu/~tptp}.} file, 
+and invokes a theorem prover.
 And indeed @c_head@ is verified by all theorem provers we tried.
 
 For recursive functions @halo@ uses fixpoint induction, as

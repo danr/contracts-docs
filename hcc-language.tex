@@ -18,7 +18,7 @@ d   & ::= & f\; \ol{a} \; \ol{(x\!:\!\tau)} = u \\
 u   & ::= & \multicolumn{2}{l}{e \; \mid \; @case@\;e\;@of@\;\ol{K\;\ol{y} -> e}} \\
 e  & ::=  & x            & \text{Variables} \\
    & \mid & f[\ol{\tau}] & \text{Function variables} \\
-   & \mid & K[\ol{\tau}](\ol{e}) & \text{Data constructors (saturated)} \\
+   & \mid & K[\ol{\tau}](\ol{e}) & \text{Data constructors} \\
    & \mid & e\;e         & \text{Applications} \\
    & \mid & @BAD@        & \text{Runtime error} \\
 \end{array}\\ \\
@@ -45,7 +45,7 @@ e  & ::=  & x            & \text{Variables} \\
 \multicolumn{3}{l}{\text{Type environments and signatures}} \\
 \Gamma & ::=  & \cdot \mid \Gamma,x \\
 \Delta & ::=  & \cdot \mid \Delta,a \mid \Delta,x{:}\tau \\
-\Sigma & ::=  & \cdot \mid \Sigma,T{:}n \mid \Sigma,f{:}\forall\ol{a} @.@ \tau \mid \Sigma,K^{\ar}{:}\forall\ol{a} @.@ \oln{\tau}{\ar} -> @T@\;\as
+\Sigma & ::=  & \cdot \mid \Sigma,T{:}n \mid \Sigma,f{:}\forall\ol{a} @.@ \tau \mid \Sigma,K^{\ar}{:}\forall\ol{a} @.@ \oln{\tau}{\ar} -> T\;\as
 \end{array}
 \\ \\
 \begin{array}{lrll}
@@ -72,9 +72,9 @@ it has arity $n$, and sometimes write it $f^n$.
 The right hand side $u$ of a definition is either a @case@ expression or a
 @case@-free expression $e$.  A @case@-free expression consists of
 variables $x$, function variables $f[\taus]$ fully applied to their
-type arguments, applications $e_1\;e_2$, data constructor applications
-$K[\taus](\ol{e})$. As a notation, we use
-$\oln{x}{n}$ for sequences of elements of size $n$. When $n$ is
+type arguments, applications $e_1\;e_2$, and data constructor applications
+$K[\taus](\ol{e})$. The latter return values of datatypes $T\;\taus$. As a 
+notation, we use $\oln{x}{n}$ for sequences of elements of size $n$. When $n$ is
 omitted $\ol{x}$ has a size which is implied by the context or is not
 interesting.
 
@@ -102,7 +102,7 @@ definition, and (iii) constructors are fully applied.
 Any Haskell program can be transformed into this restricted
 form by lambda-lifting, @case@-lifting, and eta-expansion respectively,
 and our working prototype does just this.
-However this simpler language is extremely
+However this simpler language is notationally
 convenient for the translation of programs to first-order logic.
 
 $\theLang$ is an explicitly-typed language, and we assume the existence
@@ -248,7 +248,7 @@ for functions $f$.  We will say what contracts mean formally in
 Section~\ref{s:den-sem-contracts}.  However, here is their informal meaning:
 \begin{itemize}
 \item $e \in \{x | e'\}$ means that $e$ does not evaluate to a value
-  or $e[e'/x]$ evaluates to @True@ or does not evaluate to a value.
+  or $e'[e/x]$ evaluates to @True@ or does not evaluate to a value.
 Notice that $e'$ is an arbitrary expression
 (in our implementation, arbitrary Haskell expressions),
 rather than being restricted to some well behaved meta-language.  This
@@ -304,9 +304,10 @@ app(t,\oln{s}{n}) & = & (\ldots(app(t,s_1),\ldots s_n)\ldots) \\
 We begin with the syntax of the FOL language, which is given in
 Figure~\ref{fig:fol-image}. There are two syntactic forms,
 \emph{terms} and \emph{formulae}. Terms include saturated function applications
-$f(\ol{t})$, saturated constructor applications $K(\ol{t})$, and variables. They
-also include, for each data constructor $K^\ar$ in the signature
-$\Sigma$ with arity $\ar$ a set of {\em selector functions}
+$f(\ol{t})$, that is, fully applied to all the arguments that were declared at their
+definition. They also include saturated constructor applications $K(\ol{t})$, 
+variables, and, for each data constructor $K^\ar$ in the signature
+$\Sigma$ with arity $\ar$, a set of {\em selector functions}
 $\sel{K}{i}(t)$ for $i \in 1 \ldots \ar$.  The terms $app(t,s)$ and
 $f_{ptr}$ concern the higher-order aspects of $\theLang$
 (namely un-saturated applications), which we
@@ -365,7 +366,7 @@ we discuss in Section~\ref{s:cf-fol}.
 \\ \\
 \ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Ct} = \formula{\phi}} \\ \\
 \begin{array}{rcl}
-\ctrans{\Sigma}{\Gamma}{e \in \{(x{:}\tau) \mid e' \}}
+\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}
   & = & \formula{t{=}\unr} \\
   & \lor & \formula{t'[t/x]{=}\unr} \\
   & \lor & \formula{t'[t/x]{=}\True} \\
@@ -402,6 +403,7 @@ we discuss in Section~\ref{s:cf-fol}.
  \textsc{AxDisjC} & \formula{\forall \oln{x}{n}\oln{y}{m} @.@ K(\ol{x}) \neq J(\ol{y})} \\
                   & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
                   & \text{ and } (J{:}\forall\as @.@ \oln{\tau}{m} -> S\;\as) \in \Sigma \\
+                  & \text{ and } K \neq J \\
  \textsc{AxDisjCBU} & \formula{(\forall \oln{x}{n} @.@ K(\ol{x}) \neq \unr \; \land \; K(\ol{x}) \neq \bad)} \\
                   & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
  \textsc{AxInj}   & \formula{\forall \oln{y}{n} @.@ \sel{K}{i}(K(\ys)) = y_i} \\
@@ -496,13 +498,15 @@ You can think of $@map@_{ptr}$ as a ``pointer to'', or ``name of'' of, @map@.
 The $app$ axiom for @map@ translates a saturated use of @map@'s pointer into
 a call of @map@ itself.
 
-This translation of higher-order functions to first-order logic may be
-easy, but it is not complete. In particular, in first-order logic we
-can only reason about functions with a concrete first-order
-representation (i.e. the functions that we already have and their
-partial applications) but, for example, lambda expressions cannot be
-created during proof time. Luckily, the class of properties we reason
-about (contracts) never require us to do so.
+%% DV: This paragraph confused 2 reviewers, and confuses me so I remove it.
+
+%% This translation of higher-order functions to first-order logic may be
+%% easy, but it is not complete. In particular, in first-order logic we
+%% can only reason about functions with a concrete first-order
+%% representation (i.e. the functions that we already have and their
+%% partial applications) but, for example, lambda expressions cannot be
+%% created during proof time. Luckily, the class of properties we reason
+%% about (contracts) never require us to do so.
 
 \subsection{Data types and {\tt case} expressions} \label{s:case-fol}
 
@@ -549,6 +553,8 @@ There are a quadratic number of such axioms, which presents a scaling problem.
 For this reason FOL provers sometimes offer a built-in notion of data constructors,
 so this is not a problem in practice, but we ignore this pragmatic issue here.
 \end{itemize}
+A small point is that \rulename{AxCfBU} actually implies \rulename{AxDisjBU} but for 
+presentational reasons we keep both axioms.
 
 \kc{Something needs to be said about recursion. Higher-order functions are not the problem, but recursive definitions are. What we get in FOL are all fixpoints, but our denotational semantics only wants least fixpoints. Luckily, many things we want to prove hold for all fixpoints, but sometimes we need to invoke induction, which is not explicitly part of the translation. Translating all this into a higher-order logic (such as Isabelle) would allow us to express that we mean the least fixpoint.}
 
@@ -578,7 +584,7 @@ The first clause $t=unr$, together with the axioms for $unr$ in Figure~\ref{fig:
 that $unr$ satisfies every contract.
 The second and third say that the contract holds if $e'$ diverges or is semantically
 equal to @True@.  The choices embodied in this rule were discussed at length
-in earlier work \cite{xu+:contracts} and we do not rehearse it here.
+in earlier work \cite{xu+:contracts} and we do not repeat it here.
 
 \subsection{Crash-freedom} \label{s:cf-fol}
 
