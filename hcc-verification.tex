@@ -58,8 +58,8 @@ We may consider the following variations of how to do this:
         is sound as well.
 \end{itemize*}
 
-Icremental verification essentially implies that our approach does not require a 
-whole-program analysis: once a contract is proved about a function, it can be assumed, 
+Incremental verification essentially implies that our approach does not require a
+whole-program analysis: once a contract is proved about a function, it can be assumed,
 even if the definition of the function is not exported, and subsequently used to prove
 contracts of other functions that may call it. Exporting only the contract but not a 
 definition of a function can be beneficial for efficiency reasons when verifying further
