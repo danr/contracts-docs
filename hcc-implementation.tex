@@ -79,7 +79,7 @@ definitions of @head@, @not@, and @null@,
 then we can run @halo Head.hs@. 
 The @halo@ program translates the contract and the supporting function
 definitions into
-FOL, generates a TPTP~\footnote{A  widely supported format for FOL, see~\url{www.cs.miami.edu/~tptp}.} file, 
+FOL, generates a TPTP~\footnote{A  widely supported format for FOL~\citep{SS98}.} file, 
 and invokes a theorem prover.
 And indeed @c_head@ is verified by all theorem provers we tried.
 
@@ -321,7 +321,7 @@ viewed in Figure~\ref{fig:unsres}. Our full testsuite and tables can be download
 The test cases include:
 \begin{itemize*}
   \item Crash-freedom of standard functions
-    (@(++)@, @foldr1@, @iterate@, @concatMap@).
+    (@(++)@, @iterate@, @concatMap@).
 
   \item Crash-freedom of functions with more complex recursive patterns
         (Ackermann's function, functions with accumulators).
