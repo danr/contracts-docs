@@ -1,4 +1,4 @@
-Our prototype contract checker is called \textbf{Halo}.
+Our prototype contract checker is called @halo@.
 It uses GHC to parse, typecheck, and desugar a Haskell program,
 translates it into first order logic (exactly as in Section~\ref{ssect:trans-fol}), and
 invokes a FOL theorem prover (Equinox, Z3, Vampire, etc) on the FOL formula.
@@ -178,8 +178,7 @@ applying fixed point induction.
 \subsection{Higher order functions}
 
 Our tool also deals with (very) higher order functions.
-Consider this function @withMany@, taken from the
-library @Foreign.Util.Marshal@:
+Consider this function @withMany@, from library @Foreign.Util.Marshal@:
 %\footnote{\url{http://hackage.haskell.org/packages/archive/base/latest/doc/html/Foreign-Marshal-Utils.html#v:withMany}}:
 
 \begin{code}
@@ -315,13 +314,11 @@ use the min-translation, we a finitely counter satisfiable theory.
 
 We have run @halo@ on a collection of mostly-small tests, 
 some of which can be 
-viewed in Figure~\ref{fig:unsres}. Our full testsuite and tables can be downloaded from
-\url{https://github.com/danr/contracts/blob/master/tests/BigTestResults.md}.
-\dv{Is this right? How many examples did we evaluate on? 10? 20? 300? is it important?}
+viewed in Figure~\ref{fig:unsres}. Our full testsuite and tables can be downloaded from \url{http://www.cse.chalmers.se/~koen/halo}.
 The test cases include:
 \begin{itemize*}
-  \item Crash-freedom of standard functions
-    (@(++)@, @iterate@, @concatMap@).
+  \item Crash-freedom of standard library functions, such as
+    @(++)@, @iterate@, and @concatMap@.
 
   \item Crash-freedom of functions with more complex recursive patterns
         (Ackermann's function, functions with accumulators).
