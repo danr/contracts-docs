@@ -674,7 +674,7 @@ given a function @f x = True@, the axiom $\forall x @.@ f(x) = \injKZ{True}$
 is true in the intended denotational model. However, in a call-by-value setting, $x$ 
 is allowed to be interpreted as $\bot$. That means that the unguarded axiom is 
 actually not true, because $f\,\bot \not= \injKZ{True}$.
-Instead we need the following annoying variation:
+Instead we need the following variation:
 \[  \forall x @.@ x \neq bad \land x \neq \unr => f(x) = t \]
 Moreover, the axioms for the $app(\cdot,\cdot)$ combinator have to be modified
 to perform checks that the argument is not $\bot$ or $\injBad$ before actually 
