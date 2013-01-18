@@ -1,0 +1,2188 @@
+\documentclass[preprint]{sigplanconf}
+
+\usepackage{hcc-techreport}
+\usepackage{ulem}
+
+\begin{document} 
+%% \preprintfooter{\textbf{--- DRAFT ---}}
+
+
+%% \conferenceinfo{POPL'13,} {January 23--25, 2013, Rome, Italy.}
+%% \CopyrightYear{2013}
+%% \copyrightdata{978-1-4503-1832-7/13/01}
+
+\renewcommand{\dv}[1]{\textcolor{red}{\bf \em DV: #1}}
+%% \renewcommand{\spj}[1] {{\textcolor{red}{{SPJ: #1}}} }
+%% \renewcommand{\kc}[1]{{\textcolor{magenta}{{KC: #1}}}}
+%% \renewcommand{\dr}[1]{{\textcolor{magenta}{{DR: #1}}}}
+
+
+
+\renewcommand{\textfraction}{0.1}
+\renewcommand{\topfraction}{0.95}
+\renewcommand{\dbltopfraction}{0.95}
+\renewcommand{\floatpagefraction}{0.8}
+\renewcommand{\dblfloatpagefraction}{0.8}
+
+%%% Extra definitions -- move to hcc-techreport at some point (carefully to not break that!)
+
+\newcommand{\Ct}{{\tt C}}   %% arbitrary contract
+\newcommand{\Bt}{{\tt B}}   %% base contract
+\newcommand{\Ft}{{ \tt F}}  %% first-order contract
+
+\newcommand{\CF}{{\tt CF}}
+\newcommand{\True}{\textit{True}}
+\newcommand{\False}{\textit{False}}
+\newcommand{\Bool}{\mathop{Bool}}
+\newcommand{\ys}{\ol{y}}
+\newcommand{\Th}[2]{{\cal T}_{#1,#2}}
+\newcommand{\Ecf}{\textsc{Ecf}}
+\newcommand{\oln}[2]{\ol{#1}^{#2}}
+\newcommand{\tmar}[2]{\mathop{tmar}_{#1}(#2)}
+\newcommand{\tyar}[2]{\mathop{tyar}_{#1}(#2)}
+\newcommand{\ar}{n}
+\newcommand{\lcf}[1]{\textsf{cf}(#1)}
+\newcommand{\lcfZ}{\textsf{cf}}
+\newcommand{\lncf}[1]{\neg\textsf{cf}(#1)}
+\newcommand{\unr}{\mathop{unr}}
+\newcommand{\bad}{\mathop{bad}}
+\newcommand{\sel}[3]{\mathop{app(sel\_#1\!_{#2}, #3)}}
+\newcommand{\ctrans}[3]{\{\!\!\{#3\}\!\!\}}
+\newcommand{\etrans}[3]{\{\!\!\{{#3}\}\!\!\}}
+\newcommand{\utrans}[3]{(#3 \sim \{\!\!\{#2\}\!\!\})}
+
+% Get rid of this -- just temporay
+\newcommand{\uutrans}[3]{\{\!\!\{#3\}\!\!\}}
+\newcommand{\zs}{\ol{z}}
+
+\newcommand{\red}{\rightsquigarrow}
+
+\newcommand{\dtrans}[2]{\{\!\!\{#2\}\!\!\}}
+\newcommand{\ptrans}[2]{\{\!\!\{#2\}\!\!\}}
+%% Gadgets of domain theory 
+
+
+
+\newcommand{\rollK}{\mathsf{roll}}
+\newcommand{\unrollK}{\mathsf{unroll}}
+\newcommand{\bindK}{\mathsf{bind}}
+\newcommand{\retK}{\mathsf{ret}}
+
+% \newcommand{\roll}[1]{\rollK(#1)}
+% \newcommand{\unroll}[1]{\unrollK(#1)}
+% \newcommand{\bind}[2]{\bindK_{#1}(#2)}
+% \newcommand{\ret}[1]{\retK(#1)}
+\newcommand{\roll}[1]{#1}
+\newcommand{\unroll}[1]{#1}
+\newcommand{\bind}[2]{#1(#2)}
+\newcommand{\ret}[1]{#1}
+
+\newcommand{\dlambda}{\mathsf{\lambda}}
+\newcommand{\curry}{\mathsf{curry}}
+\newcommand{\eval}{\mathsf{eval}}
+\newcommand{\uncurry}{\mathsf{incurry}}
+\newcommand{\dapp}{\mathsf{app}}
+
+\newcommand{\injK}[2]{\mathsf{#1}(#2)}
+\newcommand{\injKZ}[1]{\mathsf{#1}}
+\newcommand{\injFun}[1]{\mathsf{Fun}(#1)}
+\newcommand{\injBad}{\mathsf{Bad}}
+
+\newcommand{\unitcpo}{{\sf{\bf 1}}}
+\newcommand{\VarCpo}{\textit{Var}}
+\newcommand{\FVarCpo}{\textit{FunVar}}
+\newcommand{\interp}[3]{[\![#1]\!]_{\langle {#2},{#3}\rangle}}
+\newcommand{\dbrace}[1]{[\![#1]\!]}
+\newcommand{\linterp}[1]{{\cal I}(#1)}
+\newcommand{\lassign}[1]{\mu(#1)}
+\newcommand{\elab}[1]{\rightsquigarrow \formula{#1}}
+\newcommand{\Fcf}{F_{\lcfZ}} 
+\newcommand{\definable}[1]{{\mathop{def}}(#1)}
+\newcommand{\curly}{\rightsquigarrow}
+\newcommand{\Min}{\cal M}
+\newcommand{\mlinterp}[1]{{\cal I}^{min}(#1)}
+
+\renewcommand{\Th}{{\cal T}}
+
+\newcommand{\theLang}{\lambda_{\sf HALO}}
+
+\title{HALO2: HAskell to LOgic through Operational semantics}
+\subtitle{Reconciling verification and model checking for functional programs}
+%% \subtitle{A new approach to static contract checking for higher-order lazy programs}
+
+\authorinfo{Dimitrios Vytiniotis \\ Simon Peyton Jones}
+           {Microsoft Research}{}
+
+\authorinfo{Dan Ros\'{e}n \\ Koen Claessen}
+           {Chalmers University}{}
+%% \authorinfo{Nathan Collins}
+%%            {Portland State University}{}
+\maketitle
+\makeatactive
+
+\begin{abstract}
+\end{abstract}
+
+\category{D.3}{Software}{Applicative (functional) languages}
+
+\terms
+verification, languages
+
+\keywords
+static contract checking, first-order logic
+
+
+\section{Introduction}\label{s:intro}
+
+
+\subsection{Syntax of $\theLang$} \label{s:syntax}
+
+\begin{figure}
+\[\begin{array}{l}
+\begin{array}{lrll}
+\multicolumn{4}{l}{\text{Programs, definitions, and expressions}} \\
+P   & ::= & d_1 \ldots d_n \\
+d   & ::= & f\; \ol{a} \; \ol{x\!:\!\tau} = u \\
+u   & ::= & \multicolumn{2}{l}{e \; \mid \; @case@\;e\;@of@\;\ol{K\;\ol{y} -> e}} \\
+e  & ::=  & x            & \text{Variables} \\
+   & \mid & f[\ol{\tau}] & \text{Function variables} \\
+   & \mid & K[\ol{\tau}](\ol{e}) & \text{Data constructors} \\
+   & \mid & e\;e         & \text{Applications} \\
+   & \mid & @BAD@        & \text{Runtime error} \\
+\end{array}\\ \\
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Syntax of closed values}} \\
+ v,w & ::= & K^\ar[\ol{\tau}](\oln{e}{\ar}) \;\mid\; f^\ar[\ol{\tau}]\;\oln{e}{m < \ar}\;\mid\;@BAD@ \\ \\
+\end{array}
+\\
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Contracts}} \\
+ \Ct & ::=  & \{ x \mid e \}        & \text{Base contracts}  \\
+     & \mid &  (x : \Ct_1) -> \Ct_2      & \text{Arrow contracts} \\
+%%     & \mid & \Ct_1 \& \Ct_2             & \text{Conjunctions}   \\
+%%     & \mid & \CF                        & \text{Crash-freedom}   \\
+\end{array}
+\\ \\
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Types}} \\
+\tau,\sigma & ::=  & T\;\taus & \text{Datatypes} \\
+            & \mid & a \mid \tau -> \tau
+\end{array}
+\\ \\
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Type environments and signatures}} \\
+\Gamma & ::=  & \cdot \mid \Gamma,x \\
+\Delta & ::=  & \cdot \mid \Delta,a \mid \Delta,x{:}\tau \\
+\Sigma & ::=  & \cdot \mid \Sigma,T{:}n \mid \Sigma,f{:}\forall\ol{a} @.@ \tau \mid \Sigma,K^{\ar}{:}\forall\ol{a} @.@ \oln{\tau}{\ar} -> T\;\as
+\end{array}
+\\ \\
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Auxiliary functions}} \\
+%% constrs(\Sigma,T) & = & \{ K \mid (K{:}\forall \as @.@ \taus -> T\;\as) \in \Sigma \} \\
+(\cdot)^{-}            & = & \cdot \\
+(\Delta,a)^{-}         & = & \Delta^{-} \\
+(\Delta,(x{:}\tau))^{-} & = & \Delta^{-},x
+%% \tyar{D}{f} & = & n & \\
+%%             & \multicolumn{3}{l}{\text{when}\; (f |-> \Lambda\oln{a}{n} @.@ \lambda\ol{x{:}\tau} @.@ u) \in D} \\
+%% \tmar{D}{f} & = & n & \\
+%%             & \multicolumn{3}{l}{\text{when}\; (f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{n} @.@ u) \in D}
+\end{array}
+\end{array}\]
+\caption{Syntax of $\theLang$ and its contracts}\label{fig:syntax}
+\end{figure}
+
+The syntax, and contracts are given in Figure~\ref{fig:syntax}. No
+pointers, no selectors, no crash-freedom for now until we understand
+the theory well enough.
+
+\begin{figure*}\small
+\[\begin{array}{c} 
+\ruleform{P |- e \Downarrow v} \\ \\
+\prooftree
+\phantom{P}
+-------------------------------------{EVal}
+P |- v \Downarrow v
+~~~~
+\begin{array}{c}
+(f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P \\
+P |- u[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow v
+\end{array}
+-------------------------------------{EFun}
+P |- f[\ol{\tau}]\;\oln{e}{m} \Downarrow v
+~~~~
+\begin{array}{c}  
+P |- e_1 \Downarrow v_1 \quad
+P |- v_1\;e_2 \Downarrow w
+\end{array}
+------------------------------------------------{EApp}
+P |- e_1\;e_2 \Downarrow w
+~~~~
+\begin{array}{c}  
+\phantom{P |- e_1 \Downarrow }
+\end{array}
+------------------------------------------------{EBadApp}
+P |- @BAD@\;e_2 \Downarrow @BAD@
+\endprooftree \\ \\ 
+\ruleform{P |- u \Downarrow v} \\ \\
+\prooftree
+P |- e \Downarrow v
+-------------------------------------{EUTm}
+P |- e \Downarrow v
+~~~~ 
+\begin{array}{c}
+P |- e \Downarrow K_i[\ol{\sigma}_i](\ol{e}_i) \quad K_i \in \ol{K} \quad
+P |- e'_i[\ol{e}_i/\ol{y}_i] \Downarrow w
+\end{array}
+------------------------------------{ECase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \Downarrow w
+~~~~
+\begin{array}{c}
+P |- e \Downarrow @BAD@ \\
+\end{array}
+------------------------------------{EBadCase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \Downarrow @BAD@
+%% \begin{array}{c}
+%% (f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}) \in D \\
+%% D |- e[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow @BAD@ \\
+%% \end{array}
+%% -------------------------------------{EBadCase}
+%% D |- f[\ol{\tau}]\;\oln{e}{m} \Downarrow @BAD@
+\endprooftree
+\end{array}\]
+\caption{Operational semantics}\label{fig:opsem}
+\end{figure*}
+
+\begin{figure*}\small
+\[\begin{array}{c} 
+\ruleform{P |- e \downarrow v} \\ \\
+v ::= \ldots \mid @UNR@ \\ \\ 
+\prooftree
+\phantom{P}
+-------------------------------------{EVal}
+P |- v \downarrow v
+~~~~
+\begin{array}{c}
+(f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P \\
+P |- u[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \downarrow v
+\end{array}
+-------------------------------------{EFun}
+P |- f[\ol{\tau}]\;\oln{e}{m} \downarrow v
+~~~~
+\begin{array}{c}  
+P |- e_1 \downarrow v_1 \quad
+P |- v_1\;e_2 \downarrow w
+\end{array}
+------------------------------------------------{EApp}
+P |- e_1\;e_2 \downarrow w
+~~~~
+\begin{array}{c}  
+\phantom{P |- e_1 \downarrow } 
+\end{array}
+------------------------------------------------{EBadApp}
+P |- @BAD@\;e_2 \downarrow @BAD@
+~~~~~
+\begin{array}{c}  
+\phantom{P |- e_1 \downarrow ...}
+\end{array}
+------------------------------------------------{EUnrApp}
+P |- @UNR@\;e_2 \downarrow @UNR@
+~~~~
+\phantom{P}
+---------------------------------------{EConApp}
+P |- K[\ol{\taus}](\es)\;e \downarrow @UNR@
+
+\endprooftree \\ \\ 
+\ruleform{P |- u \downarrow v} \\ \\
+\prooftree
+P |- e \downarrow v
+-------------------------------------{EUTm}
+P |- e \downarrow v
+~~~~ 
+\begin{array}{c}
+P |- e \downarrow K_i[\ol{\sigma}_i](\ol{e}_i) \quad K_i \in \ol{K} \quad
+P |- e'_i[\ol{e}_i/\ol{y}_i] \downarrow w
+\end{array}
+------------------------------------{ECase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \downarrow w
+~~~~
+\begin{array}{c}
+P |- e \downarrow v \quad v \neq K_i(\ol{e}),@BAD@ %% K_i[\ol{\sigma}_i](\ol{e}_i) \quad
+%% K_i \notin \ol{K}
+\end{array}
+------------------------------------{EUnrCase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \downarrow @UNR@
+~~~~~
+\begin{array}{c}
+P |- e \downarrow @BAD@ \\
+\end{array}
+------------------------------------{EBadCase}
+P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \downarrow @BAD@
+%% ~~~~
+%% \begin{array}{c}
+%% P |- e \downarrow @UNR@ \\
+%% \end{array}
+%% ------------------------------------{EScrUnrCase}
+%% P |- @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'} \downarrow @UNR@
+%% \begin{array}{c}
+%% (f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ @case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}) \in D \\
+%% D |- e[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \downarrow @BAD@ \\
+%% \end{array}
+%% -------------------------------------{EBadCase}
+%% D |- f[\ol{\tau}]\;\oln{e}{m} \downarrow @BAD@
+\endprooftree
+\end{array}\]
+\caption{Operational semantics with an explicit stuck value}\label{fig:opsem}
+\end{figure*}
+
+
+
+\begin{figure}
+\[\begin{array}{c}
+\begin{array}{lrll}
+\multicolumn{3}{l}{\text{Terms}} \\
+  s,t & ::=  & x                          & \text{Variables} \\
+%       & \mid & f(\ol{t})                  & \text{Function applications} \\
+      & \mid & K(\ol{t})                  & \text{Constructor applications} \\
+%%      & \mid & \sel{K}{i}(t)              & \text{Constructor selectors} \\
+      & \mid & f_{ptr} \mid app(t,s)       & \text{Pointers and application} \\
+      & \mid & \unr \mid \bad             & \text{Unreachable, bad} \\ \\
+\multicolumn{3}{l}{\text{Formulae}} \\
+ \phi & ::=  & min(t)    & \text{Min-predicate} \\
+%%      & \mid & \lncf{t}   & \text{Can provably cause crash} \\
+      & \mid & t_1 = t_2  & \text{Equality} \\
+      & \mid & \phi \land \phi \mid \phi \lor \phi \mid \neg \phi \\
+      & \mid & \forall x @.@ \phi \mid \exists x @.@ \phi \\ \\
+\end{array}
+\\
+\multicolumn{1}{l}{\text{Abbreviations}} \\
+\begin{array}{rcl}
+app(t,\oln{s}{n}) & = & (\ldots(app(t,s_1),\ldots s_n)\ldots) \\
+\phi_1 \Rightarrow \phi_2 & = & \neg \phi_1 \lor \phi_2
+\end{array}
+\end{array}\]
+\caption{Syntax of FOL}\label{fig:fol-image}
+\end{figure}
+
+The FOL language that we will use is in Figure~\ref{fig:fol-image}. 
+Again nothing fancy, except for the $\min{t}$ predicate.
+
+% ---------------------------------------------------
+\begin{figure}
+\setlength{\arraycolsep}{2pt}
+\[\begin{array}{c}
+\ruleform{\ptrans{\Sigma}{P} = \formula{\phi} } \\ \\ 
+\ptrans{\Sigma}{\ol{d}} = \bigwedge \ol{\dtrans{\Sigma}{d}}
+\\ \\
+\ruleform{\dtrans{\Sigma}{d} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+  \dtrans{\Sigma}{f \;\ol{a}\;\ol{x{:}\tau} = u}
+    & =     & \formula{\forall \ol{x} @.@\, \utrans{\sigma}{u}{app(f_{ptr},\xs)}} \\
+%%    & \land & \formula{\forall \ol{x} @.@\, f(\ol{x}) = app(f_{ptr},\xs)} \\
+\end{array}
+\\ \\
+\ruleform{\utrans{\Sigma}{u}{s} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\utrans{\Sigma}{e}{s}
+  & = & \formula{(s = \etrans{\Sigma}{\Gamma}{e})} \\
+\multicolumn{3}{l}{\utrans{\Sigma}
+    {@case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}}{s}} \\
+\multicolumn{3}{l}{
+\quad
+  \begin{array}[t]{rl}
+    = & \formula{(\forall \ol{y} @.@ t = K_1(\ol{y}) => s = \etrans{\Sigma}{\Gamma}{e'_1})\;\land \ldots}  \\
+    \land & t = \bad => s = \bad \\
+    \land & \formula{(\forall \xs @.@ t{\neq}K_1(\xs)\;\land\;\ldots\; s \neq \bad => s=\unr)} \\
+    \mbox{where} & t  =  \etrans{\Sigma}{\Gamma}{e}
+ \end{array}
+}
+\end{array}
+\\ \\
+\ruleform{\etrans{\Sigma}{\Gamma}{e} = \formula{t} } \\ \\
+\begin{array}{rcl}
+\etrans{\Sigma}{\Gamma}{x} & = & \formula{x} \\
+\etrans{\Sigma}{\Gamma}{f[\ol{\tau}]} & = & \formula{f_{ptr}} \\
+\etrans{\Sigma}{\Gamma}{K[\ol{\tau}](\ol{e})} & = & \formula{K(\ol{\etrans{\Sigma}{\Gamma}{e}})} \\
+\etrans{\Sigma}{\Gamma}{e_1\;e_2} & = & \formula{app(\etrans{\Sigma}{\Gamma}{e_1},
+                                                     \etrans{\Sigma}{\Gamma}{e_2})}
+%% rans{\Sigma}{\Gamma}{@BAD@} & = & \formula{\bad}
+\end{array}
+\\ \\
+\ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Ct} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}
+  & = & \formula{t{=}\unr} \\
+  & \lor & \formula{t'[t/x]{=}\unr} \\
+  & \lor & \formula{t'[t/x]{=}\True} \\
+  & \mbox{where} &
+    \begin{array}[t]{rcl}
+      t  & = & \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\ctrans{\Sigma}{\Gamma}{e \in (x{:}\Ct_1) -> \Ct_2}
+  & = & \formula{\forall x @.@ \ctrans{\Sigma}{\Gamma,x}{x \in \Ct_1}
+                          \Rightarrow \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ct_2}}
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in \Ct_1 \& \Ct_2}
+%%    & = & \formula{ \ctrans{\Sigma}{\Gamma}{e \in \Ct_1} /\ \ctrans{\Sigma}{\Gamma}{e \in \Ct_2}}
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in \CF} & = & \formula{\lcf{\etrans{\Sigma}{\Gamma}{e}}}
+\end{array}
+\end{array}\]
+\caption{Translation of programs and contracts to logic}
+   \label{fig:etrans}\label{fig:contracts-minless}
+\end{figure}
+% ---------------------------------------------------
+\begin{figure}
+\setlength{\arraycolsep}{1pt}
+\[\begin{array}{c}
+\ruleform{\text{Theory}\,\Th} \\ \\ 
+\begin{array}{ll}
+%% \multicolumn{2}{l}{\text{Axioms for $bad$ and $unr$}} \\
+ \textsc{AxAppBad}  & \formula{\forall x @.@ app(\bad,x){=}\bad}  \\
+ \textsc{AxAppUnr}  & \formula{\forall x @.@ app(\unr,x){=}\unr}    \\
+ \textsc{AxAppPart} & \formula{\forall \ys\xs @.@ app(f^n, \xs^{m < n}) \neq \bad,J(\ol{y}),\unr} \\
+ \textsc{AxDisjBU} & \formula{\bad \neq \unr}  \\
+\\
+%% \multicolumn{2}{l}{\mbox{Axioms for data constructors}} \\
+ \textsc{AxDisjC} & \formula{\forall \oln{x}{n}\oln{y}{m} @.@ K(\ol{x}) \neq J(\ol{y})} \\
+                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+                  & \text{ and } (J{:}\forall\as @.@ \oln{\tau}{m} -> S\;\as) \in \Sigma \\
+                  & \text{ and } K \neq J \\
+ \textsc{AxDisjCBU} & \formula{\forall \oln{x}{n} @.@ K(\ol{x}) \neq \unr,\bad} \\
+                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+
+%% DEATH TO INJECTIVITY
+%% \textsc{AxInj}   & \formula{\forall \oln{y}{n} @.@ \sel{K}{i}(K(\ys)) = y_i} \\
+%%                  & \text{for every } K^\ar \in \Sigma \text{ and } i \in 1..n \\
+%% \\
+%% \multicolumn{2}{l}{\mbox{Axioms for crash-freedom}} \\
+%%  \textsc{AxCfC}  & \formula{\forall \oln{x}{n} @.@ \lcf{K(\ol{x})} <=> \bigwedge\lcf{\ol{x}}} \\
+%%                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+ %% \textsc{AxCfBU} & \formula{\lcf{\unr} /\ \lncf{\bad}} \\
+\end{array}
+\end{array}\]
+\caption{Theory $\Th$: axioms of the FOL constants}\label{fig:prelude} \label{fig:data-cons}
+\end{figure}
+
+
+\section{Minimization-based translation}
+
+Before I even start with the minimization-based translation I want to
+observe that I think nothing breaks (i.e. we do not become less
+complete if we remove the injectivity axioms for constructors). Not
+sure how exactly to prove this (because of the same issues that
+that arise when proving completeness further down...)
+
+The min-based translation is given in Figures~\ref{fig:min-etrans}
+and~\ref{fig:min-prelude}. I use evaluation instead of equality
+because this is the only way I've managed to produce an FOL model from
+a trace -- the symmetry and congruence properties of equality made this
+result impossible to prove for equality.
+
+\begin{figure}
+\setlength{\arraycolsep}{2pt}
+\[\begin{array}{c}
+\ruleform{\ptrans{\Sigma}{P}^M = \formula{\phi} } \\ \\ 
+\ptrans{\Sigma}{\ol{d}}^M = \bigwedge \ol{\dtrans{\Sigma}{d}^M}
+\\ \\
+\ruleform{\dtrans{\Sigma}{d}^M = \formula{\phi}} \\ \\
+\begin{array}{lcl}
+  \dtrans{\Sigma}{f \;\ol{a}\;\ol{x{:}\tau} = u} & = &  \\ 
+  \multicolumn{3}{l}{\qquad\qquad \formula{\forall\ol{x} @.@\, {\bf min(app(f_{ptr},\xs)) => } \utrans{\sigma}{u}{app(f_{ptr},\xs)}}} \\
+%%     & \land & \formula{\forall \ol{x} @.@\, f(\ol{x}) = app(f_{ptr},\xs)} \\
+\end{array} \\ \\ 
+\ruleform{\utrans{\Sigma}{u}{s}^M = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\utrans{\Sigma}{e}{s}^M
+  & = & \formula{(s \red \etrans{\Sigma}{\Gamma}{e})} \\
+\multicolumn{3}{l}{\utrans{\Sigma}
+    {@case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}}{s}^M} \\
+\multicolumn{3}{l}{
+\quad
+  \begin{array}[t]{rl}
+    = & {\bf min(t)} \;  \land \\
+      & \formula{\forall\ol{y} @.@ t \red K_1(\ol{y}) => s \red \etrans{\Sigma}{\Gamma}{e'_1}\;\land}  \\
+      & \ldots \;\land \\
+      & \formula{t \red \bad => s \red \bad \land}  \\
+      & \formula{((\forall \xs @.@ t{\not\red}K_1(\xs)) \land \ldots \land t{\not\red}\bad => s{\red}\unr)} \\
+    \mbox{where} & t  =  \etrans{\Sigma}{\Gamma}{e}
+ \end{array}
+}
+\end{array}
+\\ \\
+\ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Ct}^M = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\multicolumn{3}{l}{\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}^M = }\\
+\multicolumn{3}{l}{  \qquad ({\bf min(t)} \land t\red\unr)\;\lor} \\ 
+\multicolumn{3}{l}{  \qquad({\bf min(t'[t/x])}\;\land\; (t'[t/x]{\red}\unr \lor t'[t/x]{=}\True))} \\
+%%   &   & \;\lor\; \formula{t'[t/x]{=}\True}) \\
+  \mbox{where} & &
+      t = \etrans{\Sigma}{\Gamma}{e} \quad t' = \etrans{\Sigma}{\Gamma}{e'}
+\\
+\ctrans{\Sigma}{\Gamma}{e \in (x{:}\Ct_1) -> \Ct_2}^M
+  & = & \formula{\forall x @.@ \ctrans{\Sigma}{\Gamma,x}{x \notin \Ct_1}^M \lor} \\
+  &   & \qquad\qquad \formula{\ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ct_2}}^M
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in \Ct_1 \& \Ct_2}
+%%    & = & \formula{ \ctrans{\Sigma}{\Gamma}{e \in \Ct_1} /\ \ctrans{\Sigma}{\Gamma}{e \in \Ct_2}}
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in \CF} & = & \formula{\lcf{\etrans{\Sigma}{\Gamma}{e}}}
+\end{array}
+\\ \\
+\ruleform{\ctrans{\Sigma}{\Gamma}{e \notin \Ct}^M = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\multicolumn{3}{l}{ \ctrans{\Sigma}{\Gamma}{e \notin \{x\;\mid\;e' \}}^M = } \\ 
+\multicolumn{3}{l}{ \qquad {\bf min(t)\;\land\; min(t'[t/x])}\;\land} \\ 
+\multicolumn{3}{l}{ \qquad (\formula{t \not \red \unr\;\land\; t'[t/x] \not\red \unr \;\land\; t'[t/x] \not\red \True})} \\
+%% \multicolumn{3}{l}{ \qquad \land\; \formula{t'[t/x]{\not\red}\True}} \\
+  \mbox{where} & & 
+      t= \etrans{\Sigma}{\Gamma}{e} \;\; t' = \etrans{\Sigma}{\Gamma}{e'}
+\\
+\ctrans{\Sigma}{\Gamma}{e \notin (x{:}\Ct_1) -> \Ct_2}^M
+  & = & \formula{\exists x @.@ \ctrans{\Sigma}{\Gamma,x}{x \in \Ct_1}^M \land} \\
+  &   & \qquad\qquad \formula{\ctrans{\Sigma}{\Gamma,x}{e\;x \notin \Ct_2}}^M
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in \Ct_1 \& \Ct_2}
+%%    & = & \formula{ \ctrans{\Sigma}{\Gamma}{e \in \Ct_1} /\ \ctrans{\Sigma}{\Gamma}{e \in \Ct_2}}
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in \CF} & = & \formula{\lcf{\etrans{\Sigma}{\Gamma}{e}}}
+\end{array}
+\end{array}\]
+\caption{Translation to logic -- $min$ version}
+   \label{fig:min-etrans}\label{fig:contracts-minfull}
+\end{figure}
+
+
+\begin{figure*}
+\setlength{\arraycolsep}{3pt}
+\[\begin{array}{c}
+\ruleform{\text{Theory}\,\Th^M} \\ \\ 
+\begin{array}{ll}
+ \textsc{AxEqRefl}  & \forall x @.@ min(x) => x \red x \\
+ \textsc{AxEqTrans} & \forall xyz @.@ x \red y \;\land\; y \red z => x \red z \\
+ \textsc{AxEqMin}   & \forall xy @.@ min(x) \;\land\; x \red y => min(y) \\
+ \textsc{AxAppMin}  & \formula{\forall x y @.@ min(app(x,y)) => min(x) } \\
+ \textsc{AxEqCong}  & \forall x x' y @.@ min(app(x,y))\;\land\;x \red x' => app(x,y) \red app(x',y) \\ \\ 
+
+ %% \textsc{AxDisjUnr}  & \forall x @.@ min(x) \land x \red \unr => x \not\red J(\ol{\sel{J}{i}(x)}) \land x \not\red \bad \\
+ %% \textsc{AxDisjCon}  & \forall x\ys @.@ min(x) \land x \red K(\ys) => x \not\red J(\ol{\sel{J}{i}(x)}) \land x \not\red \bad \\
+ %% \textsc{AxDisjApp}  & \forall x\ys @.@ min(x) \land x \red app(f_{ptr}^m,\ol{y}^{< m}) => x \not\red J(\ol{\sel{J}{i}(x)}) \land x \not\red \bad \\ \\ 
+
+ \textsc{AxDisjUnr}  & \forall x\ys\zs @.@ min(x) \land x \red \unr => 
+                         x \not\red J(\ys) \land x \not\red \bad \land x \not\red app(f_{ptr}^m,\ol{z}^{< m}) \\
+ \textsc{AxDisjCon}  & \forall x\ys\xs\zs @.@ min(x) \land x \red K(\ys) => 
+                         x \not\red J(\xs) \land x \not\red \bad \land x \not\red app(f_{ptr}^m,\ol{z}^{< m}) \\
+ \textsc{AxDisjApp}  & \forall x\ys\xs @.@ min(x) \land x \red app(f_{ptr}^m,\ol{y}^{< m}) => x \not\red J(\xs) \land x \not\red \bad \\ \\ 
+
+ \textsc{AxAppBad}   & \forall x @.@ min(app(\bad,x)) => app(\bad,x) \red \bad \\
+ \textsc{AxAppUnr}   & \forall x @.@ min(app(\unr,x)) => app(\unr,x) \red \unr \\
+ \textsc{AxAppCon}   & \forall \xs,y @.@ min(app(K(\xs),y)) => app(K(\xs),y) \red \unr 
+
+ %% %% \multicolumn{2}{l}{\text{Axioms for $bad$ and $unr$}} \\
+%%  \textsc{AxAppBad}  & \formula{\forall x @.@ app(\bad,x){=}\bad}  \\
+%%  \textsc{AxAppUnr}  & \formula{\forall x @.@ app(\unr,x){=}\unr}    \\
+
+%%  \textsc{AxAppPartUnr} & \formula{\forall \xs @.@ {\bf min(app(f^n, \xs^{m < n}))} =>} \\
+%%                        & \qquad\qquad\quad app(f,\xs){\neq}\unr \\
+%%  \textsc{AxDisjBU} & \formula{\bad \neq \unr}  \\
+%% \\
+%% %% \multicolumn{2}{l}{\mbox{Axioms for data constructors}} \\
+%%  \textsc{AxDisjC} & \formula{\forall \oln{x}{n}\oln{y}{m} @.@ {\bf min(K(\ol{x})) \lor min(J(\ol{y})) => }} \\ 
+%%                   & \qquad\qquad\quad K(\ol{x}){\neq}J(\ol{y}) \\
+%%                   & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+%%                   & \text{ and } (J{:}\forall\as @.@ \oln{\tau}{m} -> S\;\as) \in \Sigma \\
+%%                   & \text{ and } K \neq J \\
+%%  \textsc{AxDisjCBU} & \formula{\forall \oln{x}{n} @.@ {\bf min(K(\ol{x})) =>} K(\ol{x}) \neq \unr,\bad} \\
+%%                   & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+%%  \textsc{AxInj}   & \formula{\forall \oln{y}{n} @.@ {\bf min(K(\ys)) => } \sel{K}{i}(K(\ys)) = y_i} \\
+%%                   & \text{for every } K^\ar \in \Sigma \text{ and } i \in 1..n \\
+%% %% \\
+%% %% \multicolumn{2}{l}{\mbox{Axioms for crash-freedom}} \\
+%% %%  \textsc{AxCfC}  & \formula{\forall \oln{x}{n} @.@ \lcf{K(\ol{x})} <=> \bigwedge\lcf{\ol{x}}} \\
+%% %%                  & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+%%  %% \textsc{AxCfBU} & \formula{\lcf{\unr} /\ \lncf{\bad}} \\
+\end{array}
+\end{array}\]
+\caption{Theory $\Th^M$: axioms of the FOL constants -- $min$ version}\label{fig:min-prelude} \label{fig:data-cons}
+\end{figure*}
+
+\section{Soundness of min-translation}
+
+Soundness of the $min$-enabled translation follows by a simple
+model-theoretic argument, shown below.
+
+\begin{theorem}[Soundness]
+If $\Th^M,\ptrans{}{P}^M \vdash \neg \ctrans{}{}{e \notin C}^M$ then
+   $\Th , \ptrans{}{P} \vdash \neg \ctrans{}{}{e \notin C}$.
+\end{theorem}
+\begin{proof}
+Let us pick any model $M \models \Th,\ptrans{}{P}$. Consider the model 
+$M^{\sharp}$ in which we interpret $min(\cdot)$ as everywhere true, and 
+$\red$ as equality. It is an easy check then to establish the following:
+\[   M^{\sharp} \models \Th^M \] 
+and
+\[   M^{\sharp} \models \ptrans{}{P} \]
+Hence we get that $M^{\sharp} \models \neg \ctrans{}{}{e \notin C}^M$ 
+by assumption. This is equivalent to $M \models \neg \ctrans{}{}{e \notin C}$,
+by induction on $C$.
+\end{proof}
+
+\section{Completeness results and non-results}
+
+For completeness we need a sequence of lemmas first.
+
+\begin{lemma}[Guarded evaluation]\label{lem:guarded-eval}
+If $P |- e \Downarrow v$ then $\Th^M, \ptrans{}{P}^M \vdash min(t) => t = t_v$
+where $t = \etrans{}{}{e}$ and $t_v = \etrans{}{}{v}$.
+\end{lemma}
+\begin{proof} 
+By induction on the evaluation of $e \Downarrow v$. We have the following
+cases to consider:
+\begin{itemize}
+  \item Case \rulename{EVal}. In this case we have $P |- v \Downarrow v$ and the result follows by rule \rulename{AxEqRefl}.
+  \item Case \rulename{EFun}. We have $P |- f[\ol{\tau}]\;\oln{e}{m} \Downarrow v$, given that 
+         $(f |-> \Lambda\ol{a} @.@ \lambda\oln{x{:}\tau}{m} @.@ u) \in P$ and 
+         $P |- u[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow v$. There are two cases to consider:
+    \begin{itemize}
+       \item Case $u = e_{rhs}$. In this case we have that $P |- u[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow v$.
+       We have that $min(app(f_{ptr},\ol{t_e}))$ -- hence 
+         \[ app(f_{ptr},\ol{t_e}) \red \etrans{}{}{u[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}]} \] 
+       Axiom \rulename{AxEqMin}, induction hypothesis, and \rulename{AxEqTrans} finish the case.
+
+       \item Case $u = @case@\;e_{scr}\;@of@\;\ol{K\;\ol{y} -> e'}$. In this case we have the following two subcases:
+       \begin{itemize}
+         \item Case \rulename{EBadCase}. $P |- e_{scr}[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow @BAD@$.
+               We have that $min(app(f_{ptr},\ol{t_e}))$, and therefore 
+                    \[ min(\etrans{}{}{e_{scr}[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}]}) \]
+               By induction hypothesis this means 
+                 \[ \etrans{}{}{e_{scr}[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}]} \red \bad \] 
+               and hence $app(f_{ptr},\ol{t_e}) \red \bad$.
+         \item Case \rulename{ECase}. We have in this case that 
+                \[ P |- e_{scr}[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}] \Downarrow K_j(\ol{e_y}) \] and 
+                 \[ P |- e'_j[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}][\ol{e_y}/\ol{y}] \Downarrow w \]
+               We have that $min(app(f_{ptr},\ol{t_e}))$, 
+               and therefore:
+               \[ min(\etrans{}{}{e_{scr}[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}]}) \] 
+               Hence, by induction hypothesis 
+                     \[ \etrans{}{}{e_{scr}[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}]} \red K_j(\etrans{}{}{\ol{e_y}}) \]
+               Therefore 
+                     \[ app(f_{ptr},\ol{t_e}) \red \etrans{}{}{e'_j[\ol{\tau}/\ol{a}][\ol{e}/\ol{x}][\ol{e_y}/\ol{y}]} \]
+               Axiom \rulename{AxEqMin}, induction hypothesis, and \rulename{AxEqTrans} finish the case.
+       \end{itemize}
+
+    \end{itemize}
+
+  \item Case \rulename{EApp}. In this case we have that $P |- e_1\;e_2 \Downarrow w$, given that 
+    $P |- e_1 \Downarrow v_1$ and $P |- v_1\;e_2 \Downarrow w$. Assume $t_1$ and $t_2$, $t_{v_1}$ be the FOL translations.
+    We have that $min(app(t_1,t_2))$, hence by \rulename{AxAppMin} we get $min(t_1)$. By induction hypothesis we get 
+    that $t_1 \red t_{v_1}$. By \rulename{AxEqCong} we then get that $app(t_1,t_2) \red app(t_{v_1},t_2)$. By \rulename{AxEqMin}
+    we get that $min(app(t_{v_1},t_2))$. By induction hypothesis then $app(t_{v_1},t_2) \red t_w$ and by \rulename{AxEqTrans}
+    we get $app(t_1,t_2) \red t_w$ as required.
+
+  \item Case \rulename{EBadApp}. We have that $P |- @BAD@\;e \Downarrow @BAD@$. We have 
+        then that $min(app(bad,t_e))$ and hence by \rulename{AxAppBad} the case is finished.
+\end{itemize} 
+\end{proof}
+
+\begin{lemma}[Guarded-Eq]\label{lem:guarded-eq}
+   $\Th , \ptrans{}{P} \vdash \etrans{}{}{e} = True$ then
+   $\Th^M , \ptrans{}{P}^M \vdash min(\etrans{}{}{e}) => \etrans{}{}{e} = True$.
+\end{lemma}
+\begin{proof}
+By soundness of the $min$-less translation (proven in the POPL paper), we 
+get that $\dbrace{e} = \injKZ{True}$, that is $P |- e \Downarrow \True$. 
+By Lemma~\ref{lem:guarded-eval} the proof is finished.
+\end{proof}
+
+
+Surprisingly, Lemmas~\ref{lem:guarded-eq} and \ref{lem:guarded-eval} extend for the case of $\unr$.
+We start with the following observation -- the $min$-less translation cannot {\em prove} divergence.
+The intuition here is that is if an expression diverges then there surely exists a model that can 
+equate it to $\unr$ (the canonical denotational model); however there exists {\em another} model
+in which we can equate the expression to $\bad$!
+
+
+\begin{lemma}[Divergence unprovability]\label{lem:divergence-unprovability}
+If $t = \etrans{}{}{e}$ and $e$ diverges then there exists a model
+${\cal M}$ such that ${\cal M} \models \Th \land \ptrans{}{P} \land (t \neq \unr)$.
+\end{lemma}
+\begin{proof} Consider the model $M_\downarrow$ where the universe consists of terms 
+arranged in equivalence classes according to the following equivalence. Consider the extended
+evaluation relation $P |- e \downarrow v$ with an explicit ``stuck'' value @UNR@. If $e$ diverges 
+then $e \equiv @BAD@$, if $P |- e \downarrow v$ then $e = v$ (NB, $v$ contains the possibility of
+@UNR@ and @BAD@). Close these axioms by reflexivity, symmetry, transitivity and congruence over 
+applications and constructors and call this relation $\equiv$.
+
+Interpret $app(\cdot,\cdot)$ as application.
+%%  and every selector $\sel{K}{j}(\cdot)$ as a function
+%% such that if $e \equiv K(\ol{e})$ according to the aforementioned equivalence then define 
+%% $\sel{K}{j}(e) = e_j$; if $e \equiv @BAD@$ then $\sel{K}{j}(e) = @BAD@$; otherwise $\sel{K}{j}(e) = @UNR@$.
+
+The following are true
+\[ M_{\downarrow} \models \Th \land \ptrans{}{P} \]
+Moreover in this model, since $e$ diverges, $e \equiv @BAD@ \neq @UNR@$.
+\end{proof}
+
+Note that using any {\em other} value than $@BAD@$ in the construction of Lemma~\ref{lem:divergence-unprovability}
+is much harder to be made to work (if at all!), since if the scrutinee of a case expression diverges, 
+allowing it to return a constructor from the patterns would result in the expression being equated to some 
+ordinary (but unknown) value. By contrast letting it return $\bad$ allows the $\bad$ value to propagate 
+through the case expression as it should -- since the case expression itself is divergent!
+
+Lemma~\ref{lem:divergence-unprovability} ascertains that if we ever prove that $\etrans{}{}{e} = \unr$ then
+$e$ does not diverge, but rather $e \not\Downarrow v$. 
+
+
+\begin{lemma}[Guarded-Unr]\label{lem:guarded-unr}
+If $t = \etrans{}{}{e}$ and 
+   $\Th , \ptrans{}{P} \vdash t = \unr$ then 
+   $\Th^M , \ptrans{}{P}^M \vdash min(t) => t = \unr$.
+\end{lemma}
+\begin{proof}
+By Lemma~\ref{lem:divergence-unprovability} $e$ does not diverge, but rather evaluation gets ``stuck''. This 
+means that $P |- e \downarrow @UNR@$ in the extended operational semantics. The result follows by repeating a 
+similar proof as in Lemma~\ref{lem:guarded-eq} for the $\downarrow$ semantics.
+\end{proof}
+
+\subsection{Completeness attempts}
+
+The lemmas shown in the previous section are very strong properties about proofs 
+in the $min$-enabled theory simulating reduction of terms. We now continue with 
+completeness results.
+
+Let us introduce some special syntax, in order to facilitate the presentation;
+in particular base contracts ($\Bt$) and first-order contracts ($\Ct$):
+\[\begin{array}{lcl}
+   \Ft   & ::= & (x_1:\Bt_1) -> \ldots -> (x_n:\Bt_n) -> \Bt \\ 
+   \Bt   & ::= & \{ y \mid e \}
+\end{array}\]
+
+\begin{theorem}[Base completeness]\label{lem:base-completeness}
+If $\Th, \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\notin}\Bt}$ then
+$\Th^M, \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e{\notin}\Bt}^M$.
+\end{theorem}
+\begin{proof}
+Let $\Bt = \{ y \mid p \}$. We know that
+$\Th, \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\notin}\Bt}$ and hence
+{\bf we could} (by soundness) deduce that 
+$ \dbrace{e} = \bot$ or $\dbrace{p[e/y]} = \bot$ or $\dbrace{p[e/y]} = \injKZ{True}$.
+
+But that is {\bf unhelpful}, since the first and second disjunct assert that the 
+expression may potentially diverge, and we know that our theories cannot prove divergence.
+
+However, recall the $M_{\downarrow}$ model from the proof of Lemma~\ref{lem:divergence-unprovability}.
+In this model we get that $e \equiv @UNR@$, or $p[e/y] \equiv @UNR@$, or $p[e/y] \equiv True$. This
+means that either $P |- e \downarrow @UNR@$, or $P |- p[e/y] \downarrow @UNR@$, or 
+$p[e/y] \downarrow @UNR@$. In any of these cases we have finite evaluation traces in hand
+and repeating the proof of Lemma~\ref{lem:guarded-eq} for the $\downarrow$ semantics finishes 
+the case.
+\end{proof}
+
+
+\paragraph{First order completeness?} Can we generalize the previous theorem to the first-order case?
+\begin{quote}
+If $\Th, \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\notin}\Ft}$ then
+$\Th^M, \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e{\notin}\Ft}^M$.
+\end{quote}
+I do not know. Here is an attempted proof when $\Ft = \{ x \mid p \} -> \{ y \mid q \}$ 
+to demonstrate the difficulties. In this case we have that:
+\[\begin{array}{l}
+     \Th,\ptrans{}{P} |- \forall x @.@  \phi(x) \lor \psi(x)  \\ 
+     \begin{array}{ll}
+       \text{where} & \phi(x) = x \neq \unr \land p[x] \neq \unr \land p[x] \neq True \\
+                    & \psi(x) = app(e,x) = \unr \lor q[app(e,x)] = \unr,True
+     \end{array}
+\end{array}\]
+Now we want to prove the corresponding $(.)^M$ statement. It suffices to deduce this for every logical term
+in our signature $t$. However {\bf we have made sure that every logical term $t$ is the image of some actual Haskell term $e_t$} so it suffices to show
+the $(.)^M$ version for some arbitrary $e_t$ argument. If we instantiate the previous statement with $e_t$ we get:
+\[ \Th,\ptrans{}{P} |- \phi(e_t) \lor \psi(e_t) \]
+Now, we have a small problem:
+\begin{itemize}
+   \item If we use the $D_{\infty}$ model then we can show that the left disjunct shows some finite evaluation traces so we can show the corresponding
+         disjunct in the $(\cdot)^M$ world by our previous theorems. But the right disjunct has some infinite evaluation traces so we can't use the same proof method!
+   \item If we use the $M_{\downarrow}$ model then we can show that the {\bf right} disjunct shows some finite evaluation traces, but the left allows the possibility
+         for the expressions and predicates to be equated to @BAD@, which $M_{\downarrow}$ equates to non-termination so we don't have the corresponding finite evaluation
+         traces there!
+\end{itemize}
+So the proof seems stuck even in the first-order case ...
+
+I want to remark that I had previous attempts to prove the theorem by
+(accidentally) using the claim that $\Th,\ptrans{}{P} |- e = unr \lor
+p[e] = \unr \lor p[e] = True$ implies that either $\Th,\ptrans{}{P} |-
+e = unr$ or $ \Th,\ptrans{}{P} |- p[e] = \unr$ or $\Th,\ptrans{}{P} |-
+p[e] = True$, or, even worse, that $\Th,\ptrans{}{P} |- \phi(t) \lor
+\psi(t)$ implies $\Th,\ptrans{}{P} |- \phi(t)$ or $\Th,\ptrans{}{P} |-
+\psi(t)$! Once we get these, we may use the lemmas regarding
+evaluation and proof in the $min$-system from the previous section to
+finish the case. Sadly this is a non-trivial step (probably even
+false).
+
+%%    \item If $\Th, \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\notin}\Ct}$ 
+%%    then $\Th^M, \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e{\notin}\Ct}^M$.
+%%    \item If $\Th, \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\in}\Ct}$ 
+%%    then $\Th^M, \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e{\in}\Ct}^M$.
+%% \end{enumerate}
+%% \end{theorem}
+%% \begin{proof}
+%% We prove the two parts by induction on the structure of the contract $\Ct$. Let us 
+%% proceed for the first goal. We consider two cases and let $t = \etrans{}{}{e}$.
+%% \begin{itemize}
+%%   \item Case $\Ct = \{ y \mid p \}$. In this case we let $t_p = \etrans{}{}{p}$ and 
+%%         we have that
+%%         \begin{eqnarray*}
+%%            \Th , \ptrans{}{P} \vdash \phi 
+%%         \end{eqnarray*}
+%%         where $\phi = t = \unr \lor t_p[t/y] = \unr
+%%                                                 \lor t_p[t/y] = \True$.
+%%         Let $\phi^M$ be $ t \red \unr \lor t_p[t/y] \red \unr
+%%                                                 \lor t_p[t/y] \red \True$.
+%%         We need to show that:
+%%         \begin{eqnarray*}
+%%           \Th^M, \ptrans{}{P}^M \vdash min(t) \land min(t_p[t/y]) => \phi^M
+%%         \end{eqnarray*}
+%%         This follows by Lemmas~\ref{lem:guarded-eq} and~\ref{lem:guarded-unr}.
+%%   \item Case $\Ct = (x:\Ct_1) -> \Ct_2$. In this case we have that:
+%%         \begin{eqnarray*}
+%%           \Th, \ptrans{}{P} \vdash \neg (\exists x @.@ \phi[x])
+%%         \end{eqnarray*}
+%%         with $\phi[x] = \ctrans{\Sigma}{\Gamma,x}{x \in \Ct_1} 
+%%                   \land \ctrans{\Sigma}{\Gamma,x}{e\;x \notin \Ct_2}$.
+%%         We must show:
+%%         \begin{eqnarray*}
+%%           \Th^M, \ptrans{}{P}^M \vdash \neg (\exists x @.@ \phi^M[x])
+%%         \end{eqnarray*}
+%%         It suffices to show that for any arbitrary $t$ we have that
+%%         \[ \Th^M, \ptrans{}{P}^M \vdash \neg\phi^M[t] \]
+%%         However\footnote{This is very delicate, this back compiling {\bf is} 
+%%         the reason I removed the selectors.} every $t$ is the image of a source term
+%%         $\etrans{}{}{e_{arg}} = t$. Hence it suffices to show that:
+%%         \[ \Th^M, \ptrans{}{P}^M \vdash \neg\ctrans{}{}{e_{arg} \in \Ct_1} \lor
+%%                       \neg\ctrans{}{}{e\;e_{arg} \notin \Ct_2} \]
+%%         This follows by induction hypothesis for both items.
+%% \end{itemize}
+
+%% For the second goal we proceed similarly: the arrow case follows by appealing
+%% to the induction hypothesis (both cases again) so let us do the base case:
+%% Let $\Ct = \{ y \mid p \}$ and $t_p = \etrans{}{}{p}$. We know that 
+%% \[  \Th,\ptrans{}{P} \vdash t \neq \unr \land t_p[t/x] \neq \unr,\True \]
+%% In this case, by adequacy of the $min$-less translation and the denotational
+%% semantics it must be the case that:
+%% $P |- e \Downarrow v_1$ and $P |- p[e/x] \Downarrow v_2$ such that $v_2 \neq True$.
+%% Moreover, these $v_1$ and $v_2$ can only be of the forms @BAD@ or $K(\ol{e})$ or $f^m\;\ol{e}^{< m}$.
+
+%% By Lemma~\ref{lem:guarded-eval} we know that:
+
+%% \[ \Th^M,\ptrans{}{P}^M |- min(t) => t \red \etrans{}{}{v_1} \] 
+%% and 
+%% \[ \Th^M,\ptrans{}{P}^M |- min(t_p[t/x]) => t \red \etrans{}{}{v_2} \]
+
+%% We need to show that $t \not\red \unr$. Assume by contradiction 
+%% $t \red \unr$. The contradiction then follows by axiom \rulename{AxDisjUnr}.
+%% Similarly we need to show that $t_p[t/x] \not\red \unr$. The argument is the
+%% same as above. We additionally need to show that $t_p[t/x] \not\red \True$. If
+%% $t_p[t/x] \red \True$ then \rulename{AxDisjCon} gives a 
+%% contradiction.\footnote{A remark: actually if we assume that all the predicates start-off 
+%% life as well-typed boolean functions, the above argument can be simplified because we 
+%% know that $v_2$ can only be @False@, hence there is no need to use the somewhat elaborate
+%% \rulename{AxDisjCon} axiom that also involves partial applications.}
+%% \end{proof}
+
+\paragraph{The problems with completeness for higher-order}
+
+Completeness for higher-order only gets more tricky. I thought that the skeleton of the proof
+would be an inductive argument by simultaneous induction that:
+\begin{itemize}
+  \item If $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \notin \Ct}$ then 
+           $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \notin \Ct}^M$.
+  \item If $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \in \Ct}$ then 
+           $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \in \Ct}^M$.
+\end{itemize}
+Both base cases are provable by a similar argument as the the base completeness proved earlier.
+However, for the arrow cases we have the same disjunction problem that we faced before. Let's
+take the example when $\Ct = \Ct_1 -> \Ct_2$ and assume that:
+\[ \Th,\ptrans{}{P} |- \neg (\exists x @.@ \ctrans{}{}{x \in \Ct_1} \land \ctrans{}{}{e x \notin \Ct_2}) \] 
+that is:
+\[ \Th,\ptrans{}{P} |- \forall x @.@ \neg\ctrans{}{}{x \in \Ct_1} \lor \neg\ctrans{}{}{e x \notin \Ct_2}) \]
+By induction we do know that if 
+$\Th,\ptrans{}{P} |- \neg\ctrans{}{}{e_t \in \Ct_1}$ then 
+$\Th^M,\ptrans{}{P}^M |- \neg\ctrans{}{}{e_t \in \Ct_1}^M$, and moreover
+that if $\Th,\ptrans{}{P} |- \neg\ctrans{}{}{e x \notin \Ct_2}$ then 
+$\Th^M,\ptrans{}{P}^M |- \neg\ctrans{}{}{e x \notin \Ct_2}^M$. But we {\bf cannot use these} to deduce that:
+\[ \Th^M,\ptrans{}{P}^M |- \forall x @.@ \neg\ctrans{}{}{x \in \Ct_1}^M \lor \neg\ctrans{}{}{e x \notin \Ct_2}^M) \]
+If it were the case that $\Th,\ptrans{}{P} |- \neg\ctrans{}{}{e_t \in \Ct_1}$ or
+ $\Th,\ptrans{}{P} |- \neg\ctrans{}{}{e x \notin \Ct_2})$ then we would be OK, but I do not believe that
+this holds. This is really the same issue outlined before in the specific case for first-order contracts.
+
+Now, some minor technical issues. Even if this case were to go through we'd still need to make sure that
+every logical term is the image of some source Haskell term. But for the second statement, case for arrow
+contracts again, we'd need to show some {\bf existential formula}. That is, if 
+$\Th,\ptrans{}{P} |- \exists x @.@ \phi$ show that $\Th^M,\ptrans{}{P}^M |- \exists x @.@ \phi^M$ for some
+formulae $\phi$ and $\phi^M$. The way that I know that we could possibly proceed here is to appeal to 
+Herbrand's theorem exists a specific logical term $t$ such that $\Th,\ptrans{}{T} |- \phi[t]$. However, 
+we can only appeal to Herbrand's theorem if our theory $\Th$ contains {\em only universal} statements. Sadly 
+observe that our theories in their simplest form contain also existential statements arising 
+from the last axiom that accompanies pattern matching.
+
+The solution to these issues is to introduce the selector functions and make sure that they are in the 
+image of a translation of a source program:
+\begin{code}
+  sel_K_i (K y1..yi...yn) = yi
+  sel_K_i _ = BAD
+\end{code}
+We then modify the translation for pattern matching to:
+\[ \begin{array}{c}
+\ruleform{\utrans{\Sigma}{u}{s} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\utrans{\Sigma}{e}{s}
+  & = & \formula{(s = \etrans{\Sigma}{\Gamma}{e})} \\
+\multicolumn{3}{l}{\utrans{\Sigma}
+    {@case@\;e\;@of@\;\ol{K\;\ol{y} -> e'}}{s}} \\
+\multicolumn{3}{l}{
+\;\;
+  \begin{array}[t]{rl}
+    = & \formula{(\forall \ol{y} @.@ t = K_1(\ol{y}) => s = \etrans{\Sigma}{\Gamma}{e'_1})\;\land \ldots}  \\
+    \land & t = \bad => s = \bad \\
+    \land & \formula{{\bf t {\neq}K_1(\ol{\sel{K_1}{i}{t}}})\land\ldots t{\neq}\bad => s=\unr)} \\
+    \mbox{where} & t  =  \etrans{\Sigma}{\Gamma}{e}
+ \end{array}
+}
+\end{array}
+\end{array}\]
+In other words we have {\em replaced the statement that would give rise to an existential} with 
+our own skolem function -- which happens to be expressible in source as well. In this way we can 
+satisfy both requirements above. Interestingly, if one follows this approach, the axioms generated 
+for the selector functions are of the (somewhat recursive) form:
+\[\begin{array}{l}
+   \forall x @.@ (\forall \ys @.@ x = K(\ys) => \sel{K}{i}{x} = y_i)\; \land \\
+   \qquad\qquad  (\forall \ys @.@ x = J(\ys) => \sel{K}{i}{x} = \bad)\; \land \\
+   \qquad\qquad \ldots \\ 
+   \qquad\qquad (x = \bad => \sel{K}{i}{x} = \bad)\;\land  \\ 
+   \qquad\qquad (x \neq K(\ol{\sel{K_1}{i}{x}}) \land \ldots \land x \neq \bad => \\ 
+   \qquad\qquad\qquad \sel{K}{i}{x} = \unr)
+\end{array}\]
+
+Of course proving the theorem still fails on exactly the same place as
+in the first-order case (the disjunction problem), so all of the above is only 
+relevant if the disjunction problem can be surmounted.
+
+\subsection{A different semantics that guarantees completeness}\label{ssect:bad-ok}
+
+Consider a slightly different definition of the semantics of
+contracts, as well as their translation to first-order logic.
+
+\[\begin{array}{lcl}
+  \dbrace{d \in \{ y \mid p\}}_\rho     & = & \dbrace{p}_{\rho,y |-> d} \neq \injKZ{False} \\ \\
+
+  \dbrace{d \notin \{ y \mid p \}}_\rho & = & \dbrace{p}_{\rho,y |-> d} \neq \injKZ{True},\bot \\ \\
+
+  \dbrace{d \in (x:\Ct_1) -> \Ct_2}_\rho & = & \text{for all} d', either \dbrace{d \notin \Ct_1} \\ 
+                                        &   & \quad \text{or }\dbrace{\dapp(d,d') \in \Ct_2}_{\rho,x|->d'} \\
+
+  \dbrace{d \notin (x:\Ct_1) -> \Ct_2}_\rho & = & \text{there exists} d', such that \dbrace{d \in \Ct_1} \\ 
+                                        &   & \quad \text{and }\dbrace{\dapp(d,d') \notin \Ct_2}_{\rho,x|->d'} \\
+\end{array}\]
+
+The important difference with the ordinary version of contact satisfaction is 
+that postconditions where the predicate returns @BAD@ are considered OK. 
+Moreover if a precondition predicate crashes on an argument then this is again 
+OK. So, predicates that return @BAD@ have this dual nature. Since we will effectively 
+be proving negations of the $\notin$ relation, the following lemma is important.
+
+\begin{lemma}\label{lem:in-notin}
+If it is not the case that $\dbrace{d \notin \Ct}$ then $\dbrace{d \in \Ct}$.
+\end{lemma}
+\begin{proof}
+By induction on the contract $\Ct$. We have the following cases:
+\begin{itemize}
+  \item Case $\Ct = \{ y \mid p \}$. Then we know that $\dbrace{p}_{\rho,y |-> d} = \injKZ{True}$
+        or $\dbrace{p}_{\rho,y |-> d} = \bot$. This means that $\dbrace{p}_{\rho,y |-> d} \neq \injKZ{False}$.
+  \item Case $\Ct = \Ct_1 -> \Ct_2$ (doing the non-depependent case for simplicity). We know that
+        for every $d'$ either:
+          \begin{itemize}
+              \item (a) it is not the case that $\dbrace{d' \in \Ct_1}$, {\bf OR}
+              \item (b) it is not the case that $\dbrace{\dapp(d,d') \in \Ct_2}$.
+          \end{itemize}
+        Pick a $d'$. We want to show that either
+          \begin{itemize}
+              \item (c) it is the case that $\dbrace{d' \notin \Ct_1}$, {\bf OR}
+              \item (d) it is the case that $\dbrace{\dapp(d,d') \in \Ct_2}$.
+          \end{itemize}
+        If (a) is true then by the contrapositive of the induction hypothesis (c) holds.
+        If (b) is true then by the induction hypotehsis (d) holds.
+\end{itemize}
+\end{proof}
+
+Consider now the corresponding translation to first-order logic -- with and without $min$.
+
+\[\begin{array}{c}
+\ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Ct} = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}
+  & = & \formula{t'[t/x]{\neq}\False} \\
+  & \mbox{where} &
+    \begin{array}[t]{l}
+      t = \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\ctrans{\Sigma}{\Gamma}{e \notin \{x\;\mid\;e' \}}
+  & = & \formula{t'[t/x]{\neq}\True,\unr} \\
+  & \mbox{where} &
+    \begin{array}[t]{l}
+      t = \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\ctrans{\Sigma}{\Gamma}{e \in (x{:}\Ct_1) -> \Ct_2}
+  & = & \formula{\forall x @.@ \ctrans{\Sigma}{\Gamma,x}{x \notin \Ct_1}
+                          \lor \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ft_2}}
+\\
+\ctrans{\Sigma}{\Gamma}{e \notin (x{:}\Ct_1) -> \Ct_2}
+  & = & \formula{\exists x @.@ \ctrans{\Sigma}{\Gamma,x}{x \in \Ct_1}
+                          \land \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ct_2}}
+\end{array}
+\end{array}\]
+
+In the $min$-world we have:
+
+\[\begin{array}{c}
+\ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Ct}^M = \formula{\phi}} \\ \\
+\begin{array}{rcl}
+\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}^M
+  & = & min(t'[t/x]) \land \formula{t'[t/x]{\neq}\False} \\
+  & \mbox{where} &
+    \begin{array}[t]{l}
+      t = \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\ctrans{\Sigma}{\Gamma}{e \notin \{x\;\mid\;e' \}}^M
+  & = & min(t'[t/x]) \land \formula{t'[t/x]{\neq}\True,\unr} \\
+  & \mbox{where} &
+    \begin{array}[t]{l}
+      t = \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+    \end{array}
+\\
+\ctrans{\Sigma}{\Gamma}{e \in (x{:}\Ct_1) -> \Ct_2}^M
+  & = & \formula{\forall x @.@ \ctrans{\Sigma}{\Gamma,x}{x \notin \Ct_1}^M
+                          \lor \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ft_2}}^M
+\\
+\ctrans{\Sigma}{\Gamma}{e \notin (x{:}\Ct_1) -> \Ct_2}^M
+  & = & \formula{\exists x @.@ \ctrans{\Sigma}{\Gamma,x}{x \in \Ct_1}^M
+                          \land \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ct_2}}^M
+\end{array}
+\end{array}\]
+
+%% (The negation of
+%% $\notin$ translation is {\em not} equivalent to the $\in$ translation). 
+
+Soundness is easy to prove.
+
+\begin{theorem}[Soundness]
+If  $\Th,\ptrans{}{P} |- \neg (e \notin \Ct)$ 
+and $\dbrace{e} = d$ then $\dbrace{d \in \Ct}$.
+Moreover, if $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \notin \Ct}^M$
+then $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \notin \Ct}^M$.
+\label{lem:in-notin}
+\end{theorem}
+\begin{proof}
+For the first part, we know by basic soundness that it is not the case that 
+$\dbrace{e \notin \Ct}$, and by Lemma~\ref{lem:in-notin}, we get that 
+$\dbrace{e \in \Ct}$. The second part follows by the same model-theoretic
+argument as we established soundness earlier (using an always-true $\min$
+interpretation).
+\end{proof}
+
+Investigating the practical ramifications of this choice is to be 
+explored -- however we observe  that under this translation 
+we {\em are also guaranteed to get completeness:}
+
+\begin{theorem}[Completeness]
+If we use the selector-based theories (described above) then the following are true:
+\begin{itemize}
+  \item If $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \notin \Ct}$ then 
+           $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \notin \Ct}^M$.
+  \item If $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \in \Ct}$ then 
+           $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \in \Ct}^M$.
+\end{itemize}
+\end{theorem}
+\begin{proof}
+\dv{Sketch still -- but pretty sure it works now!} By induction on 
+the contract $\Ct$ one can observe that we only get formulas of a
+mixed-prefix quantification $\forall\exists\ldots\forall\exists @.@
+\phi$ where $\phi$ consists of conjunctions and disjunctions of
+equations of the form $t = False$, $t = True$, $t = \unr$. To
+eliminate the mixed prefix, we proceed as in previous proofs to
+eliminate the universal quantifiers and we appeal to Herbrand's
+theorem for eliminating the existentials -- since our theory is now a
+purely universal one. Finally we end up knowing that we have proved a
+statement of the form:
+\[     \Th,\ptrans{}{P} |- \etrans{}{}{e} = False/True/\unr \lor \ldots \land \ldots \]
+This means that in the $M_\downarrow$ model we have conjunctions or
+disjunctions of finite evaluation traces, which in turn allows us to
+use the guarded evaluation lemmas in the $min$-theories and finish the proof.
+\end{proof}
+
+
+This all is very good news because it asserts that we have 
+not lost any proving power by moving to the $min$ world.
+
+\dv{But we must explore the practicality of this approach. I think 
+it puts more stress in having to have a special $cf(\cdot)$ 
+predicate, because any argument for which the precondition 
+crashes and the postcondition crashes will be a counterexample. 
+So it is quite essential to have a CF contract too in practice.}
+
+\section{Finite models}\label{sect:fin-mods}
+\newcommand{\Univ}{{\cal U}}
+\newcommand{\redop}{\longrightarrow^{\star}}
+
+The unmodified original theory with an injectivity axiom {\em definitely} does
+not enjoy finite models:
+\[   \forall \xs\ys @.@ K(\xs) = K(\ys) => \xs = \ys \]
+The reason is that discrimination axioms (\rulename{AxDisjC}) in
+combination with injectivity axioms force any model of the theory to be infinite.
+
+As we have seen, injectivity does not increase the ability to prove
+equations between expressions and values.(\dv{Can I make this more
+rigorous? Can I get a result for arbitrary contracts?}) Since it
+hurts the finite model property we can safely drop it.
+
+However, due to the presence of pattern matching, injectivity has not
+been completely eliminated. One can write projection functions -- e.g.
+\begin{code}
+sel (S x) = x 
+sel _     = @BAD@
+\end{code}
+Notice that if we have $S(x) = S(y)$ then 
+$app(sel_{ptr},S(x)) = app(sel_{ptr},S(y))$ and by reduction $x = y$.
+
+We've seen that the $min$-enabled theory is sound (\dv{Maybe complete too ...}) 
+but does it enjoy finite models? Let us condider first simple base contracts. 
+Assume that we know that
+\begin{equation}
+  \dbrace{e} \notin \dbrace{\{y \mid p\}} \label{fm:eq1} 
+\end{equation}
+Then this statement gives us evidence for two {\em finite execution traces}:
+\begin{equation}
+   e \Downarrow v  \quad\quad p[e/y] \Downarrow v \neq True \label{fm:eq2} 
+\end{equation}
+Given these two traces we will show next that the FOL formula 
+\[ \Th^M \land \ptrans{}{P} \land \ctrans{}{}{e \notin \{ y \mid p \}} \] 
+does have a {\em finite model}. By doing this we get a formal guarantee that 
+if \ref{fm:eq1} holds then {\em there is} a finite model, so a finite model finder 
+that systematically explores finite models will find one.
+
+Here is the construction. 
+
+\begin{definition}[Construction finite models from traces]
+We start with a finite set of traces $S$ which are all finite and of the form $P |- e \Downarrow v$.
+By trace I mean the conclusion of every subderivation in the derivation tree 
+for $\Downarrow$, not just the final conclusion. This is equivalent to a collection 
+of traces in the $\downarrow$ relation, such that no resulting value is equal to @UNR@.
+\begin{itemize}
+  \item Let the universe $\Univ$ be the set of terms and all their subterms that appear in $S$, @UNR@, and @BAD@
+  \item Consider the following helper function on arbitrary terms:
+        \[ \mu(e) = \text{if } e \in \Univ \text{ then } e \text{ else } @UNR@ \] 
+        Define the interpretation of the logical terms as follows:
+        \[\begin{array}{lcl} 
+            I(K)   & = & \lambda\es \in \Univ @.@ \mu(K(\es)) \\
+            I(app) & = & \lambda e_1,e_2 \in \Univ @.@ \mu(e_1\;e_2) \\
+            I(f_{ptr}) & = & \mu(f) \\
+            I(unr)  & = & @UNR@ \\
+            I(bad)  & = & @BAD@ 
+        \end{array}\]
+  \item Define the interpretation of $min$ to be as follows:
+        \[\begin{array}{lcl} 
+           I(min) & = & \lambda e \in \Univ @.@ \\ 
+                  &   & e \text{ was evaluated in } $S$ \text{ or } \\ 
+                  &   & \text{some } e\;e_1\ldots e_n \text{ was evaluated in } S
+        \end{array}\]
+  \item Let us use notation $\redop$ for the many-step small-step evaluation 
+        relation corresponding to $\downarrow$.
+        Define the interpretation of $\red$ to be:
+        \[ I(\red) = \lambda e_1,e_2 \in \Univ @.@ (e_1{\in}I(min)) \text{ and } (e_1{\redop}e_2) \]
+\end{itemize} 
+Let us call this model $M_S$.
+\end{definition}
+
+
+\begin{theorem} If $S$ is a finite collection of finite traces then $M_S \models \Th^M$.
+\end{theorem}
+\begin{proof}
+We examine all the axioms of the theory.
+\begin{itemize}
+  \item \rulename{AxEqRefl}. We must show: 
+             \[ M_S \models \forall x @.@ min(x) => x \red x \] 
+        Pick a term $e_x \in \Univ$, assume $e_x \in I(min)$. Then clearly $e_x \in I(min)$ and $e_x \redop e_x$.
+  \item \rulename{AxEqTrans}. We must show:
+            \[ M_S \models \forall x y z @.@ x \red y \land y \red z => x \red z \]
+        Pick terms $e_x,e_y,e_z \in \Univ$. Assume $e_x \in I(min)$ and $e_x \redop e_y$ and $e_y \in I(min)$ 
+        and $e_y \redop e_z$. Then clearly $e_x \in I(min)$ and $e_x \redop e_z$.
+  \item \rulename{AxEqMin}. We must show:
+           \[ M_S \models \forall xy @.@ min(x) \land x \red y => min(y) \]
+        Pick terms $e_x,e_y \in \Univ$ assume $e_x \in I(min)$ and $e_x \redop e_y$. Then it must be that
+        $e_y \in I(min)$.\footnote{Interestingly, in this interpretation I do not need the $min(x)$ assumption 
+        in \rulename{AxEqMin}. But I do need it in reflexivity.}
+  \item \rulename{AxAppMin}. We must show:
+          \[ M_S \models \forall x @.@ min(app(x,y)) => min(x) \]
+        Pick $e_x,e_y \in \Univ$ assume $\mu(e_x\;e_y) \in I(min)$. Now, it must be the case that
+        $\mu(e_x\;e_y) = e_x\;e_y$ because otherwise we would have $@UNR@ \in I(min)$, which is not the case
+        since all traces evaluate to non-@UNR@ values. Therefore $e_x\;e_y \in I(min)$ which implies that 
+        $e_x \in I(min)$.
+  \item \rulename{AxEqCong}. We must show:
+        \[\begin{array}{l}
+               M_S \models \forall x x' y @.@ min(app(x,y))\;\land\;x \red x' \\ 
+               \qquad\qquad\quad => app(x,y) \red app(x',y) 
+        \end{array}\]
+        Pick $e_x, e_x', e_y \in \Univ$ and assume that $\mu(e_x\;e_y) \in I(min)$. As before this means
+        $e_x\;e_y \in I(min)$. We also know that $e_x \in I(min)$ and $e_x \redop e_x'$, hence by a simple
+        property of evaluation $e_x\;e_y \redop e_x'\;e_y$. 
+  \item \rulename{AxDisjUnr}. We must show:
+        \[\begin{array}{l}
+             M_S \models \forall x\ys\zs @.@ min(x) \land x \red \unr => \ldots 
+        \end{array}\]
+        Pick $e_x, \ol{e_x},\ol{e_y},\ol{e_z} \in \Univ$. Assume $e_x \in I(min)$ and $e_x \redop @UNR@$. This
+        is a contradiction so this axiom becomes trivially true in this model.
+  \item \rulename{AxDisjCon}. We must show:
+        \[\begin{array}{l}
+            M_S \models \forall x\ys\xs\zs @.@ min(x) \land x \red K(\ys) => \\
+            \qquad\qquad\begin{array}{ll}
+                         & x \not\red J(\xs) \\ 
+                   \land & x \not\red \bad \\
+                   \land & x \not\red app(f_{ptr}^m,\ol{z}^{< m})
+                        \end{array}
+        \end{array}\]
+        Pick $e_x,\ol{e_x},\ol{e_y},\ol{e_z} \in \Univ$. Assume $e_x \in I(min)$ and $e_x \redop \mu(K(\ol{e_y}))$,
+        It is impossible to have $\mu(K(\ol{e_y})) = @UNR@$ and therefore it must be that 
+        $e_x \redop K(\ol{e_y})$. Now we must show three things:
+        \begin{itemize}
+          \item $e_x \not\redop \mu(J(\ol{e_x}))$. There are two cases -- either 
+                $\mu(J(\ol{e_x})) = @UNR@$ or $\mu(J(\ol{e_x})) = J(\ol{e_x})$. In the first case we know that
+                $e_x \not\redop @UNR@$ and in the second case the result follows by determinacy of evaluation.
+          \item $e_x \not\redop @BAD@$. This follows by determinacy of evaluation.
+          \item $e_x \not\redop \mu(\ldots\mu(\mu(f e_{z1}) e_{z2}) \ldots,e_{zk}))$. Now if the outer
+                $\mu$ gives @UNR@ then we are done, else it is the identity. If the next inner gives @UNR@ 
+                then we are done again because we'd have to have $e_x \redop @UNR@$ etc.
+        \end{itemize}
+   \item \rulename{AxDisjApp}. Similar argument as above, observing that if 
+             $e_x \in I(min)$ and $e_x \redop \mu(\ldots\mu(\mu(f e_{y1}) e_{y2}) \ldots e_{yk})$ then all
+             of the $\mu$ calls must be identities, otherwise we'd have $e_x \redop @UNR@$ which can't happen.
+   \item \rulename{AxAppBad}. We must show that:
+             \[ M_S \models \forall x @.@ min(app(\bad,x)) => app(\bad,x) \red \bad  \]
+         Pick $e_x \in \Univ$. Assume $\mu(@BAD@ e_x)) \in I(min)$. Hence it is not @UNR@. Indeed
+              $@BAD@\;e_x \redop @BAD@$.
+   \item \rulename{AxAppUnr}. We must show that:
+             \[ M_S \models \forall x @.@ min(app(\unr,x)) => app(\unr,x) \red \unr \]
+         Pick $e_x \in \Univ$ assume $\mu(@UNR@\;e_x) \in I(min)$. This is a contradiction -- if $\mu$ is
+         the identity then $@UNR@\;e_x \in I(min)$ which means $@UNR@ \in I(min)$; and if it is @UNR@ then
+         we get again a contradiction.
+   \item \rulename{AxAppCon}. We must show that:
+             \[ \forall \xs,y @.@ min(app(K(\xs),y)) => app(K(\xs),y) \red \unr  \]
+         Pick $\ol{e_x}, e_y \in \Univ$. Assume that $\mu(\mu(K(\ol{e_x})\;e_y)) \in I(min)$. This means that
+         both $\mu$ functions must be identities; but even so $K(\ol{e_x})\;e_y \redop @UNR@$ so even then 
+         it must be that $@UNR@ \in I(min)$, a contradiction.
+\end{itemize}
+\end{proof}
+
+\begin{theorem} If $S$ is a finite collection of finite traces then $M_S \models \ptrans{}{P}^M$.
+\end{theorem}
+\begin{proof}
+The program $P$ is a collection of definitions so we show that $M_S \models d$ for every $d \in P$. We have two
+cases:
+\begin{itemize}
+  \item The definition is of the form 
+                 \[ f\;\xs = e \]
+        We must show that:
+        \[     M_S \models \forall \xs @.@ min(app(f_{ptr},\xs) => app(f_{ptr},\xs) \red \etrans{}{}{e} \]
+        Pick $\ol{e_x}$ and assume that $\mu(\ldots\mu(\mu(f) e_{x1}) e_{x2})\ldots) \in I(min)$. This means that all
+        $\mu$ calls must give the identity -- otherwise we'd get $@UNR@ \in I(min)$. Subsequently we have that
+        $f\;\ol{e_x} \in I(min)$ and hence all terms and subterms of $e[\ol{e_x}/\xs]$ appear in the universe
+        $\Univ$. This
+        means that $I[\ol{x |-> e_x}](\etrans{}{}{e}) = e[\ol{e_x}/\xs]$ and clearly 
+        $f\;\ol{e_x} \redop e[\ol{e_x}/\xs]$ as required.
+        
+  \item The definition is of the form 
+                 \[ f\;\xs = @case@\;e_s\;@of@\;\ol{K\;\ys -> e_K} \]
+        We need to show the following:
+        \[\begin{array}{l}
+            \forall \xs @.@ min(app(f_{ptr},\xs) => \\
+            \quad \begin{array}{lll}
+             (a) &        & min(\etrans{}{}{e_s}) \\
+             (b) & \land & (\forall\ys @.@ \etrans{}{}{e_s}{\red}K(\ys) => app(f_{ptr},\xs) \red \etrans{}{}{e_K}) \\
+                 & \land & \ldots \\
+             (c) & \land & (\etrans{}{}{e_s}\red\bad => app(f_{ptr},\xs) \red \bad) \\
+             (d) & \land & ( (\exists \xs @.@ \etrans{}{}{e_s} \red K(\xs)))\;\lor\;\ldots \\
+                 &       & \quad \lor (\etrans{}{}{e_s} \red \bad\;\lor\;app(f_{ptr},\xs) \red \unr 
+                  \end{array}
+        \end{array}\]
+        Pick $\ol{e_x} \in \Univ$. Assume that $\mu(\ldots\mu(\mu(f) e_{x1}) e_{x2})\ldots) \in I(min)$. 
+        This means that all $\mu$ calls must give the identity -- otherwise we'd get $@UNR@ \in I(min)$. 
+        Subsequently we have that $f\;\ol{e_x} \in I(min)$ and hence all terms and subterms 
+        of $e_s[\ol{e_x}/\xs]$ appear in the universe and in fact $e_s[\ol{e_x}/\xs] \in I(min)$ --- moreover
+        $I[\ol{x |-> e_x}](\etrans{}{}{e_s})$ must be equal to $e_s[\ol{e_x}/\xs]$. So (a) is proved. 
+        For (b), let us use $J$ for $I[\ol{x |-> e_x}]$ below. Let us pick:
+        $\ol{e_y} \in \Univ$ and assume that $e_s[\ol{e_x}/\xs] \redop \mu(K(\ol{e_y}))$. It must be that
+        this call to $\mu$ gives the identity -- hence $e_s[\ol{e_x}/\xs] \redop K(\ol{e_y})$. In this case
+        we know that $f\;\ol{e_x} \redop [\ol{e_x}/\xs][\ol{e_y}/\ys]e_{K} = J[\ol{y |-> e_y}](\etrans{}{}{e_{K}})$ 
+        since
+        all the subterms of $[\ol{e_x}/\xs][\ol{e_y}/\ys]e_{K}$ appear in the universe. So (b) is proven.
+        The case for (c) is simple.
+        For (d) we know that -- since the trace is finite -- it must be the case that there exists a value $v$
+        such that $e_s[\ol{e_x}/\xs] \redop v$. Let us perform inversion on the shape of $v$:
+        \begin{itemize}
+          \item $v = K(\es)$ contained in the patterns. Then $d$ holds trivially (first disjunct, the 
+                corresponding $\mu$ call must be identity).
+          \item $v = J(\es)$ where $J$ is not contained in the patterns. This is impossible to happen because
+                the trace would return @UNR@, which it doesn't.
+          \item $v$ is some partial application. Same as previous case.
+          \item $v = @BAD@$. The corresponding disjunct in (d) holds. 
+          \item $v = @UNR@$. This can't happen since in that case @UNR@ would have to be in the trace.
+        \end{itemize}
+\end{itemize}
+\end{proof}
+
+
+\begin{theorem} If $S \supseteq \{ p[e/y] \Downarrow w \neq True, e \Downarrow v \}$ 
+                         then $M_S \models \ctrans{}{}{e \notin \{ y \mid p \}}^M$.
+\end{theorem}
+\begin{proof} This is a very simple proof. Call $\etrans{}{}{e} = t$, $\etrans{}{}{p} = t_p$ and 
+$\etrans{}{}{v} = t_v$, $\etrans{}{}{w} = t_w$. By completenss results in the previous sections we 
+know that:
+ \[ \Th^M,\ptrans{}{P} |- min(t) \land min(t_p[t/y]) => t \red t_v \land t_p[t/y] \red t_w \]
+By inversion on the shape of $v$ we know that it can only be a constructor application, partial 
+application, or @BAD@. As a consequence, rule \rulename{AxDisjUNR} gives us that $t \not\red \unr$. 
+Hence we have:
+\[ \Th^M,\ptrans{}{P},min(t),min(t_p[t/y]) |- t \not\red \unr \land t_p[t/y] \red t_w \]
+By inversion on the shape of $w$ we know that it can be constructor, application, partial 
+application, or @BAD@. As a result by \rulename{AxDisjUnr} we know that:
+\[ \Th^M,\ptrans{}{P},min(t),min(t_p[t/y]) |- t \not\red \unr \land t_p[t/y] \not\red \unr \]
+However we know that if it is a particular constructor application then it is not $True$, hence
+rule \rulename{AxDisjCon} asserts $t_p[t/y] \not\red True$; 
+if it is a partial application then by rule \rulename{AxDisjApp} we know that it $t_p[t/y] \not\red True$;
+if it is @BAD@ then rule \rulename{AxDisjCon} asserts again that $t_p[t/y] \not\red True$. In all cases:
+\[ \Th^M,\ptrans{}{P},min(t),min(t_p[t/y]) |- t \not\red \unr \land t_p[t/y] \not\red \unr,True \]
+
+But $M_S \models \Th^M,\ptrans{}{P}, min(t) \land min(t_p[t/y])$ and therefore 
+     \[ M_S \models min(t) \land min(t_p[t/y]) \land t \not\red \unr \land t_p[t/y] \not\red True \]
+that is
+     \[M_S \models \ctrans{}{}{e \notin \{ y \mid p \}} \]
+as required.
+\end{proof}
+
+%% \begin{proof}
+%% We consider the term model of all terms and subterms that appear in $S$. We consider equality
+%% to be the equality induced by derivations $e \Downarrow v$ (that is we set $e = v$) and close 
+%% by reflexivity, transitivity and congruence. We create a table for $min$ in the following way:
+%% for each equivalence class created, we add it to $min$ iff there exists a term $e_{L}$ in 
+%% that class that has appeared in the left-hand side of a derivation $e_{L} \Downarrow \_$ 
+%% in the set of traces. Let us call this model ${\cal M}_S$. 
+%% \end{definition}
+%% \begin{lemma} If $S \supseteq \{ p[e/y] \Downarrow False, e \Downarrow v \}$ is a finite
+%% collection of traces, then: 
+%% \[   {\cal M}_S \models \Th^M \land \ptrans{}{P} \land \ctrans{}{}{e \notin \{ y \mid p \}} \] 
+%% \end{lemma}
+%% \begin{proof} \dv{TODO! But I think it should be doable ... } \end{proof}
+
+\subsection{First-order arrow contracts}
+
+The story is not finished yet, what about arrow contracts $(x:\Ct_1) -> \Ct_2$. The problem
+here that if we know that $e$ does not belong in $\dbrace{(x:\Ct_1) -> \Ct_2}$ then this mean
+that there exists some denotation $d$ such that the application of $\dbrace{e}$ to $d$ does
+not belong to $\Ct_2$ {\em and moreover} $d$ belongs in $\dbrace{\Ct_1}$. 
+
+Assuming that $\Ct_1$ and $\Ct_2$ are both base contracts and that $d$ is the image of some 
+actual term $e_d$ then we do get some finite traces from the fact that the application does 
+not belong in $\Ct_2$ but the fact is that our model has to also be a model of:
+\[       \ctrans{}{}{e_d \in \Ct_1} \]
+
+This is problematic, because we have no ``finite witness'' that $e_d$ is in $\dbrace{\Ct_1}$, 
+contrary to the negative case. In fact $e_d$ could diverge, or, even worse, the predicate 
+associated with $\Ct_1$ could diverge yielding an infinite trace. 
+
+From an infinite trace it can often be the case that a finite model can be constructed, if
+the trace involves a finite number of new values. But in principle an infinite trace can
+be causing the evaluation of even more and new terms, which excludes finite models. Here is 
+an example:
+
+\begin{code}
+data Nat = S Nat | Z
+
+pinf Z (S x) = pinf (S Z) (S (S x))
+pinf (S g) (S x) = pinf (S (S g)) (S (S x))
+pinf g Z     = False
+
+isZero Z = True
+isZero _ = False
+
+f :: Nat -> Nat
+f x = x
+
+pinfBroken = f ::: Pred (pinf Z) --> Pred isZero
+\end{code}
+
+Notice in this case that there is a finitely representable
+counterexample @s = S s@ -- however the predicate 
+@pinf Z s@ loops in a fashion that evaluates ever growing terms! Indeed
+the $min$-enabled translation {\em also} results in the model finder 
+looping for this broken contract.
+
+We acknowledge the existence of such problematic counterexamples but
+we can at least characterize (conservatively, not tightly) some
+situations where we definitely can guarantee a finite model (we use $\Bt$ below
+for base contracts). Incidentally same problems should arise as well with the
+translation from section~\ref{ssect:bad-ok}
+
+\subsection{Characterization of when finite models exist}
+
+For first-order arrow contracts we can show that finite models exist whenever
+a ``finitistic'' counterexample exists -- that is, one where the precondition
+is actually true (as opposed to divergent)
+
+\begin{theorem}[Finite models for finitistic first-order semantics]
+Assume a contract $\Ft = (x{:}\Bt_1) -> \Bt_2$ and $\Bt_1 = \{ y \mid q \}$. Assume that there 
+exists $e$ such that $\dbrace{e} \neq \bot$ and $\dbrace{q[e/y]} = \injKZ{True}$. Then there
+exists a finite model $M_S$ such that 
+\[   M_S \models \Th^M,\ptrans{}{P},\ctrans{}{}{f \notin \Ft}^M \]
+\end{theorem}
+\begin{proof}
+It is easy to see that in this case we have a finite number of traces in hand.
+\end{proof}
+
+%% Assume that there exists $e$ such that $\dbrace{e} \in \flat\dbrace{\Bt_1}$ but 
+%% $f\;e \notin \dbrace{\Bt_2}_{x |-> \dbrace{e}}$. Then there exists a finite model $M_S$ such that
+%% \[     M_S \models \Th^M,\ptrans{}{P},\ctrans{}{}{f \notin \Ft}^M
+%% \end{theorem}
+%% \begin{proof} Easy to show similarly to before, since we have a finite collection of finite traces. \end{proof}
+
+
+\section{Higher-order arrow contracts}
+
+So the question here is, when do we have to use the $min$ guard on arrow contracts, that is:
+\[\begin{array}{l}
+    \ctrans{}{}{e \in \Ct_1 -> \Ct_2}^M =? \\
+      \qquad\quad \forall x @.@ {\bf min(e\;x) =>} 
+                   \ctrans{}{}{x \notin \Ct_1}^M \lor \ctrans{}{}{e\;x \in \Ct_2}^M 
+\end{array}\]
+
+
+I {\em think} that finite models break without this -- for instance consider a predicate 
+\begin{code}
+   sel (S x) y = sel x
+   sel _     y = y 
+\end{code}
+And consider a contract assumption: $h \in (x:True) -> \{ y \mid sel x \}$. Automatically 
+we have became interested in all possible successors by adding this to our assumptions.
+
+Our proposed solution is to guard such arrow contracts with $min$ guards too so that only if the 
+$h$ function is called, we become interested in evaluating its postcondition on an actual argument.
+Arguably we lose some proving power (here is a contrived example).
+
+\begin{code}
+flop Z = True
+flop (S x) = flop x
+flop_ok = flop ::: Pred recN --> Pred (\x -> x)
+
+{-# NOINLINE glop #-}
+glop Z     = flop (S Z)
+glop (S x) = flop (S (S x))
+
+glop_ok = glop ::: Pred recN --> Pred (\x -> x)
+               `Using` flop_ok
+
+{-# NOINLINE foo #-}
+foo (S x) = flop (S x)
+foo Z     = True
+
+foo_ok = foo ::: Pred recN --> Pred (\x -> x)
+             `Using` glop_ok
+\end{code}
+This is a rather contrived kind of incompleteness induced by $min$. 
+Basically we are using a contract for an expression that we don't 
+directly call but if were to reduce it a few steps down the way, this 
+expression could result to an expression for which we are interested 
+and hence the full power of the contract should be unleashed. So this
+contract holds in the $min$-free world but fails to hold in the $min$-world.
+Interestingly if we were to use the evaluation relation in the $min$ free
+world, it'd fail there too.
+
+However we are likely to have finite models much more often -- but not always if the call 
+to $h$ creates a possibly infinite evaluation of the postcondition of $h$. If that is not 
+the case then we have finite models again. In practice this is almost always the case from 
+our experience with the testsuites.
+
+\dv{I think this is the only way we can present the $min() =>$ guards in arrow contracts. 
+It is extremely hard to give any formal guarantee either for completeness or finite models. I've
+consistently failed trying to do this for a very long time.}
+
+\section{Crash-freedom}
+\dv{This section is still in flux}
+
+In terms of practicality we quite need crash freedom. I think that the ``right'' 
+axioms for crash freedom are simply the following:
+
+\[\begin{array}{ll}
+ \textsc{AxCfC}  & \formula{\forall \oln{x}{n} @.@ \lcf{K(\ol{x})} <=> \bigwedge\lcf{\ol{x}}} \\
+                 & \text{ for every } (K{:}\forall\as @.@ \oln{\tau}{n} -> T\;\as) \in \Sigma \\
+ \textsc{AxCfBU} & \formula{\lcf{\unr} /\ \lncf{\bad}}
+\end{array}\]
+
+In the $min$-world:
+
+\[\begin{array}{ll}
+ \textsc{AxCfRed}  & \forall x y @.@ min(x) \land x \red y => (\lcf{x} <=> \lcf{y}) \\
+ \textsc{AxCfC1}   & \forall \xs @.@ min(K(\xs)) \land \lcf{K(\xs)} => \bigwedge(\lcf{x_i} \land min(x_i))\\
+ \textsc{AxCfC2}  & \bigwedge\lcf{\ol{x}} => \lcf{K(\xs)} \\ 
+ \textsc{AxCfBU} & \formula{\lcf{\unr} /\ \lncf{\bad}} \\
+%% \textsc{AxCfNRed}  & \forall x y @.@ min(x) \land x \red y => (\nlcf{x} <=> \nlcf{y}) \\
+ \textsc{AxCfNC}   & \forall \xs @.@ min(K(\xs)) \land \lncf{K(\xs)} => 
+                                              \exists x_i @.@ min(x_i) \land \lcf{\ol{x}} \\
+\end{array}\]
+
+Moreover, in the $min$ world we add conjunctions with $min(t)$ 
+both in the positive and the negative translation:
+\[\begin{array}{lcl}
+    \ctrans{}{}{e \in \CF}    & = & min(\etrans{}{}{e}) \land \lcf{\etrans{}{}{e}} \\ 
+    \ctrans{}{}{e \notin \CF} & = & min(\etrans{}{}{e}) \land \lncf{\etrans{}{}{e}}
+\end{array}\]
+
+Soundness of the $min$ translation definitely still holds -- completeness I believe yes but 
+we need a separate lemma:
+
+\begin{lemma} The following is true
+\begin{itemize}
+  \item If $\Th,\ptrans{}{P} |- \lcf{\etrans{}{}{e}}$ then 
+           $\Th^M,\ptrans{}{P}^M |- min(\etrans{}{}{e}) => \lcf{\etrans{}{}{e}}$.
+\end{itemize}
+\end{lemma}
+\begin{proof}\dv{Sketch} The proof is done again via the $M_\downarrow$ model -- since there 
+crashing and non-termination are identified the assumption has a finite collection of traces 
+as witnesses and we can exploit that to simulate a reduction-based proof in the $min$-world.
+\end{proof}
+
+Restrictions of the finite models theorem should also hold for ``finitistically'' 
+crash-free terms.
+
+
+%% \section{Arrow contracts and recovering finite models}
+
+%% Consider the following restriction on the usage of contracts.
+
+%% \begin{definition}[Contract-strict functions]
+%% Assume that all base contracts $\ol{x{:}\{y \mid q\}} -> \{ y \mid r \}$ attached to function $f$ are such
+%% that the following condition holds: In any application $f\;\ol{e}$,
+%% if $\dbrace{e_i} = \bot$ or $\dbrace{q_i}_{y |-> \dbrace{e_i}} = \bot$ then $\dbrace{f\;\ol{e}} = \bot$. That
+%% is the function $f$ cannot be less strict than its precondition. 
+%% \end{definition}
+
+%% %% This discussion should go somewhere -- but where? 
+%% %% An easy way 
+%% %% to achieve this is to add the precondition as a Haskell conjunction in the postcondition. E.g. if:
+%% %% \begin{code}
+%% %% f ::: (x:{y | p}) -> {y | q} 
+%% %% \end{code} 
+%% %% we could transform it to:
+%% %% \begin{code}
+%% %% f ::: (x:{y | p}) -> {y | x && p x && q }
+%% %% \end{code}
+%% %% \end{definition}
+%% %% which will ensure that if the argument diverges or the 
+%% %% precondition diverges then the postcondition diverges. Of course using 
+%% %% the second contract means that an argument which causes the precondition 
+%% %% to diverge but fails the postcondition will never be a counterexample.
+%% %% \begin{code}
+%% %% f ::: {x | \_.loop } -> {y | \_.False }
+%% %% \end{code}
+%% %% Anything is a counterexample in the first semantics. There is no
+%% %% counterexample if we add the looping conjuncts to the postcondition.
+
+%% \begin{theorem}[Finite models for contract-strict functions]
+%% If the function $f$ is contract-strict for contract $\Ct = (x:\{ y \mid p\}) -> \{ y \mid q \}$ and 
+%% and there exists $e$ such that $\dbrace{e} \in \dbrace{\{y \mid p\}}$ but 
+%% $\dbrace{f\;e} \notin \dbrace{\{y \mid q\}}_{x |-> \dbrace{e}}$ then there exists 
+%% a finite model $M_s \models \Th^M,\ptrans{}{P}^M,\ctrans{}{}{f \notin \Ct}^M$.
+%% \end{theorem}
+%% \begin{proof} By contract strictness it must be the case that $P |- p[e/y] \Downarrow v$ 
+%% and $P |- e \Downarrow v$, otherwise $e$ would not be a counterexample since the result or the 
+%% postcondition would diverge. This means that we have in hand a finite collection of finite traces 
+%% and we can repeat the construction of the previous section.
+%% \end{proof}
+
+
+
+
+%% Enforcing contract-strictness is a rather external condition so could we do something different that 
+%% allows us to prove perhaps fewer things but internalizes this choice? Consider the following alternative
+%% semantics for first order contracts:
+%% \[\begin{array}{lcl}
+%%   \dbrace{\{ y \mid p\}}_\rho & = & 
+%%           \{ d \mid d = \bot \text{ or } \dbrace{p}_{\rho,y |-> d} \sqsubseteq \injKZ{True} \} \\ \\ 
+%%   \flat\dbrace{\{ y \mid p\}}_\rho & = & 
+%%           \{ d \mid \dbrace{p}_{\rho,y |-> d} = \injKZ{True} \} \\ \\
+
+%%   \dbrace{(x:\Bt) -> \Ft}_\rho & = & \{ d \mid \text{for all } d' \in \flat\dbrace{\Bt}_{\rho} \\
+%%                               &   & \qquad \text{ it is }\dapp(d,d') \in \dbrace{\Ft}_{\rho,x|->d'} \} 
+%% \end{array}\]
+
+%% Consider the corresponding changes to $\ctrans{}{}{e \in \Ft}$ 
+%% and $\ctrans{}{}{e \in \Ft}^M$ and $\ctrans{}{}{e \notin \Ft}^M$ needed 
+%% to reflect this semantics:
+
+%% \[\begin{array}{c}
+%% \ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Ft} = \formula{\phi}} \\ \\
+%% \begin{array}{rcl}
+%% \ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}
+%%   & = & \formula{t{=}\unr} \\
+%%   & \lor & \formula{t'[t/x]{=}\unr} \\
+%%   & \lor & \formula{t'[t/x]{=}\True} \\
+%%   & \mbox{where} &
+%%     \begin{array}[t]{rcl}
+%%       t  & = & \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+%%     \end{array}
+%% \\
+%% \flat\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}
+%%   & = & \formula{t'[t/x]{=}\True} \\
+%%   & \mbox{where} &
+%%     \begin{array}[t]{rcl}
+%%       t  & = & \etrans{\Sigma}{\Gamma}{e} \; \text{and} \; t' = \etrans{\Sigma}{\Gamma}{e'}
+%%     \end{array}
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \in (x{:}\Bt_1) -> \Ft_2}
+%%   & = & \formula{\forall x @.@ \flat\ctrans{\Sigma}{\Gamma,x}{x \in \Bt_1}
+%%                           \Rightarrow \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ft_2}}
+%% \end{array}
+%% \end{array}\]
+
+%% In the $min$-world we have:
+
+%% \[\begin{array}{c}
+%% \ruleform{\ctrans{\Sigma}{\Gamma}{e \in \Bt}^M = \formula{\phi}} \\ \\
+%% \begin{array}{rcl}
+%% \multicolumn{3}{l}{\ctrans{\Sigma}{\Gamma}{e \in \{x\;\mid\;e' \}}^M = }\\
+%% \multicolumn{3}{l}{  \qquad({\bf min(t'[t/x])}\;\land\; (t'[t/x]{=}\True))} \\
+%% %%   &   & \;\lor\; \formula{t'[t/x]{=}\True}) \\
+%%   \mbox{where} & &
+%%       t = \etrans{\Sigma}{\Gamma}{e} \quad t' = \etrans{\Sigma}{\Gamma}{e'}
+%% %% \\
+%% %% \ctrans{\Sigma}{\Gamma}{e \in (x{:}\Ct_1) -> \Ct_2}^M
+%% %%   & = & \formula{\forall x @.@ \ctrans{\Sigma}{\Gamma,x}{x \notin \Ct_1}^M \lor} \\
+%% %%   &   & \qquad\qquad \formula{\ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ct_2}}^M
+%% %% \\
+%% %% \ctrans{\Sigma}{\Gamma}{e \in \Ct_1 \& \Ct_2}
+%% %%    & = & \formula{ \ctrans{\Sigma}{\Gamma}{e \in \Ct_1} /\ \ctrans{\Sigma}{\Gamma}{e \in \Ct_2}}
+%% %% \\
+%% %% \ctrans{\Sigma}{\Gamma}{e \in \CF} & = & \formula{\lcf{\etrans{\Sigma}{\Gamma}{e}}}
+%% \end{array} \\ \\ 
+%% \ruleform{\ctrans{\Sigma}{\Gamma}{e \notin \Ft}^M = \formula{\phi}} \\ \\
+%% \begin{array}{rcl}
+%% \multicolumn{3}{l}{ \ctrans{\Sigma}{\Gamma}{e \notin \{x\;\mid\;e' \}}^M = } \\ 
+%% \multicolumn{3}{l}{ \qquad {\bf min(t)\;\land\; min(t'[t/x])}\;\land} \\ 
+%% \multicolumn{3}{l}{ \qquad (\formula{t \not \red \unr\;\land\; t'[t/x] \not\red \unr \;\land\; t'[t/x] \not\red \True})} \\
+%% %% \multicolumn{3}{l}{ \qquad \land\; \formula{t'[t/x]{\not\red}\True}} \\
+%%   \mbox{where} & & 
+%%       t= \etrans{\Sigma}{\Gamma}{e} \;\; t' = \etrans{\Sigma}{\Gamma}{e'}
+%% \\
+%% \ctrans{\Sigma}{\Gamma}{e \notin (x{:}\Bt_1) -> \Ft_2}^M
+%%   & = & \formula{\exists x @.@ \ctrans{\Sigma}{\Gamma,x}{x \in \Bt_1}^M \land} \\
+%%   &   & \qquad\qquad \formula{\ctrans{\Sigma}{\Gamma,x}{e\;x \notin \Ft_2}}^M
+%% %% \\
+%% %% \ctrans{\Sigma}{\Gamma}{e \in \Ct_1 \& \Ct_2}
+%% %%    & = & \formula{ \ctrans{\Sigma}{\Gamma}{e \in \Ct_1} /\ \ctrans{\Sigma}{\Gamma}{e \in \Ct_2}}
+%% %% \\
+%% %% \ctrans{\Sigma}{\Gamma}{e \in \CF} & = & \formula{\lcf{\etrans{\Sigma}{\Gamma}{e}}}
+%% \end{array}
+%% \end{array}\]
+
+
+
+%% For this semantics and logic translation, it is easy to show that soundness still holds. 
+%% Moreover the following results are true:
+
+
+%% Very pleasantly, completeness with respect to the unmodified theory goes through as well.
+
+%% \begin{theorem}[Completeness for finitistic first-order semantics]
+%% Assume a contract $\Ft = (x{:}\Bt_1) -> \Bt_2$. If 
+%% $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \in \Ft}$ then $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \in \Ft}^M$.
+%% \end{theorem}
+%% \begin{proof}
+%% We proceed as in the failed proof previously 
+%% \end{proof}
+
+
+
+
+
+%% \newcommand{\fin}{\mathsf{FIN}}
+%% \dv{After milions of discussions with Josh I am slowly starting to get a handle on the semantics of arrows.}
+
+
+%% Maybe having contracts where the precondition excludes infinite traces is a {\em good thing} to do 
+%% anyway. Instead of imposing an external condition might we modify the very same meaning of 
+%% contracts?
+
+%% \[\begin{array}{lcl}
+%%    d \notin \{ y \mid p \}  &  = & d \neq \bot \text{ and } \dbrace{p}_{x |-> d} \neq \bot,\injKZ{True} \\
+%%    d \notin \Ct_1 -> \Ct_2  & =  & \text{there exists } d' \in_{fin} \Ct_1 \text{ and } d(d') \notin \Ct_2 \\
+
+%%    d \in_{\fin} \{ y \mid p \} & = & \dbrace{p}_{x |-> d} = \injKZ{True}  \\
+%%    d \in_{\fin} \Ct_1 -> \Ct_2 & = & \text{for all } d', d' \notin \Ct_1 \text{ or } d(d') \in_{\fin} \Ct_2 \\ \\ 
+  
+%%    d \in \{ y \mid p \}    & = & d = \bot \text{ or } \dbrace{p}_{x |-> d} \sqsubseteq \injKZ{True} \\ 
+%%    d \in \Ct_1 -> \Ct_2    & = & \text{forall } d', d' \in_{\fin} \Ct_1 \text{ implies } d(d') \in \Ct_2
+%% \end{array}\] 
+%% Something along these lines? What we lose? What we gain? What still holds? Not sure ...
+
+%% \subsection{Higher-order arrow contracts}
+
+%% The story of first-order arrow contracts is quite reasonable: as our
+%% example shows it is quite pathological to have a counterexample that
+%% is justified by an infinite trace in the precondition, and such that
+%% that infinite trace has to evaluate infinitely many new terms.
+
+%% For higher-order contracts \dv{As is the case when we try to prove things
+%% by induction, or when we have already proven a contract about a function and
+%% attempt to prove more contracts using it.} we still have completeness (by our
+%% previous theorems) but we have lost the finite models property -- this time due
+%% to the {\em quantifier} of an arrow contract for an argument.
+
+%% Consider a counterexample for:
+%%   \[ \ctrans{}{}{f \in (\Ct_1 -> \Ct_2) -> \Bc} \] 
+%% It will consist of a program (a denotation actually, but for the sake of the discussion 
+%% let's just say program) $e$ such that $\ctrans{}{}{e \in \Ct_1 -> \Ct_2}$ but such that 
+%% $f(e)$ does not satisfy the $\Bc$ contract. This in turn means that {\em for all possible 
+%% arguments} to $e$, $e'$, either they do not satisfy $\Ct_1$ or the application satisfies 
+%% $\Ct_2$. As there can be infinitely many arguments to $e$ that need to be tested, this does
+%% not seem to be a property that we should hope it have some finite justification.
+
+%% Consider the concrete positive 
+%% translation when $\Ct_1 -> \Ct_2$ is $\{ x \mid p\} -> \{y \mid q\}$ and let us call $g$ the
+%% counterexample: 
+%% \begin{eqnarray*}
+%%   \forall x. (min(x) \land min(p(x) \land x \neq \unr \land p(x) = \False) \lor \\
+%%   \quad  min(g(x)) \land min(q(g(x))) \land q(g(x)) = \True 
+%% \end{eqnarray*}
+%% Notice that I have not added cases for $q(g(x)) = \unr$ and $g(x) = \unr$, following the 
+%% ``finitistic'' satisfaction definition above.
+
+%% Imagine though that $p(x) = \True$ uniformly -- this implies in effect that: 
+%% \begin{eqnarray*}
+%%     \forall x. min(g(x)) \land min(q(g(x))) \land q(g(x)) = \True
+%% \end{eqnarray*}
+
+%% If $g$ is the identity function, in effect we have asserted that for 
+%% $\forall x. min(x)$ -- losing finite models.
+
+%% It appears that the quantifier $\forall x @.@ \ldots$ introduced by the positive translation
+%% is over too many terms, {\em even if} we restrict the base contract satisfaction to have this
+%% finitistic flavor we have described previously.
+
+%% So, what is a good candidate for modifying the positive arrow translation which can recover
+%% finite models? One good candidate is: 
+
+%% \section{FM for the restricted arrow translation?}
+%% Can we get some finitistic notion of satisfaction in this restricted
+%% arrow world that can give us a guarantee for finite models?
+
+
+\end{document}
+
+\clearpage
+\section{Soundness and completeness}
+
+\begin{theorem}[Soundness]
+If $\Th^M,\ptrans{}{P}^M \vdash \neg \ctrans{}{}{e \notin C}^M$ then
+   $\Th , \ptrans{}{P} \vdash \neg \ctrans{}{}{e \notin C}$.
+\end{theorem}
+
+\begin{proof}
+Let us pick any model ${\cal M}$ of $\Th , \ptrans{}{P}$. Then it is easy to 
+confirm that the model ${\cal M}'$ which is just ${\cal M}$ with the predicate $min(\cdot)$ 
+interpreted as everywhere true, is a model of $\Th^M , \ptrans{}{P}^M$. This in turn means 
+that $M' \models \neg \ctrans{}{}{e \notin C}^M$, and it is an easy lemma to show that this 
+implies $M \models \neg \ctrans{}{}{e \notin C}$.
+\end{proof}
+
+Next we show that this translation is no weaker than the canonical translation (NB: which of course is incomplete with respect to the denotational semantics).
+
+\begin{lemma}[Guarded-Neq]\label{lem:guarded-neq}
+If $\Th , \ptrans{}{P} \vdash \etrans{}{}{e} \neq \unr$ then
+   $\Th^M , \ptrans{}{P}^M \vdash min(\etrans{}{}{e}) => \etrans{}{}{e} \neq \unr$.
+\end{lemma}
+\begin{proof}
+By soundness of the $min$-less translation and adequacy of the denotational
+semantics we get that $e \Downarrow v$ for some value $v$. By Lemma~\ref{lem:guarded-eval}
+this means that $\Th^M, \ptrans{}{P}^M \vdash min(t) => t = t_v$ where $t = \etrans{}{}{e}$
+and $t_v = \etrans{}{}{v}$. However since $v$ is a value form we know that $t_v \neq \unr$ 
+in the $min$-theory.
+\end{proof}
+
+\begin{lemma}[Guarded-Eq]\label{lem:guarded-eq}
+   $\Th , \ptrans{}{P} \vdash \etrans{}{}{e} = True$ then 
+   $\Th^M , \ptrans{}{P}^M \vdash min(\etrans{}{}{e}) => \etrans{}{}{e} = True$.
+\end{lemma}
+\begin{proof}
+By soundness of the $min$-less translation we get that 
+$\dbrace{e} = \injKZ{True}$, that is $e \Downarrow \True$. By 
+Lemma~\ref{lem:guarded-eval} the proof is finished.
+\end{proof}
+
+\begin{lemma}[Guarded eval]\label{lem:guarded-eval}
+If $e \Downarrow v$ then $\Th^M, \ptrans{}{P}^M \vdash min(t) => t = t_v$
+where $t = \etrans{}{}{e}$ and $t_v = \etrans{}{}{v}$.
+\end{lemma}
+\begin{proof} 
+By induction on the evaluation of $e \Downarrow v$.
+\end{proof}
+
+\begin{lemma}[Guarded-Unr]\label{lem:guarded-unr}
+If $t = \etrans{}{}{e}$ and 
+   $\Th , \ptrans{}{P} \vdash t = \unr$ then 
+   $\Th^M , \ptrans{}{P}^M \vdash min(t) => t = \unr$.
+\end{lemma}
+\begin{proof} (\dv{Sketch!}) This is a much more tricky proof. The problem is that 
+soundness of the $min$-less translation and adequacy of the denotational semantics 
+tells us that there is no $v$ such that $e \Downarrow v$. This in turn means two 
+things:
+\begin{itemize}
+  \item Either $e$ genuinely diverges, or
+  \item Evaluation of $e$ gets stuck -- because of some type error.
+\end{itemize}
+Now, in the second case we are conceptually done because we have a finite number of steps
+until stuckness so we can extend the proof of Lemma~\ref{lem:guarded-eval} by using the 
+$\downarrow$ operational semantics that includes {\em explicitly provable} unreachability 
+(stuckness) as a special value @UNR@ (the logical translation is what you'd expect, 
+translating @UNR@ to $\unr$). Denotationally we still associate $\unr$ to $\bot$.
+
+What if $e$ actually diverges? Then I claim that Lemma~\ref{lem:divergence-unprovability}
+is true, which finishes the case.
+\end{proof}
+
+\begin{lemma}[Divergence unprovability]\label{lem:divergence-unprovability}
+If $t = \etrans{}{}{e}$ and $e$ diverges then there exists a model
+${\cal M}$ such that ${\cal M} \models \Th \land \ptrans{}{P} \land (t \neq \unr)$.
+\end{lemma}
+\begin{proof} (\dv{Sketch!})
+The intuition here is that if an expression diverges then we can equate 
+it to $\bad$ {\em as well} in some model! Consider the following model: 
+let the universe be the universe of terms arranged in equivalence classes accoring
+to the following equivalence. If $e$ diverges then $e = bad$, if $e \downarrow v$ then
+$e = v$ and if the evaluation of $e$ gets stuck then $e = unr$. Close by reflexivity,
+symmetry, transitivity and congruence. I claim that this is a good model of the theory
+and the program definitions, and moreover in this model no divergent term is equated to
+$\unr$, but rather $\bad$.
+
+\dv{NB: Using any {\em other} value than $\bad$ in the construction of Lemma~\ref{lem:divergence-unprovability}
+is much harder to be made to work (if at all!), since if the scrutinee of a case expression diverges, allowing it 
+to return a constructor from the patterns would result in the expression being equated to some ordinary (but unknown) 
+value. By contrast letting it return $\bad$ allows the $\bad$ value to propagate through the case expression as
+it should -- since the case expression itself is divergent!}
+
+\end{proof}
+
+
+
+
+\begin{theorem}[Completeness]
+The following are true:
+\begin{enumerate}
+   \item If $\Th , \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\notin}\Ct}$ 
+   then $\Th^M , \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e{\notin}\Ct}^M$.
+   \item If $\Th , \ptrans{}{P} \vdash \neg \ctrans{}{}{e{\in}\Ct}$ 
+   then $\Th^M , \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e{\in}\Ct}^M$.
+\end{enumerate}
+\end{theorem}
+\begin{proof}
+We prove the two parts by induction on the structure of the contract $\Ct$. Let us 
+proceed for the first goal. We consider two cases and let $t = \etrans{}{}{e}$.
+\begin{itemize}
+  \item Case $\Ct = \{ y \mid p \}$. In this case we let $t_p = \etrans{}{}{p}$ and 
+        we have that
+        \begin{eqnarray*}
+           \Th , \ptrans{}{P} \vdash \phi 
+        \end{eqnarray*}
+        where $\phi = t \neq \unr \land t_p[t/y] \neq \unr
+                                                \land t_p[t/y] \neq \True$.
+        We need to show that:
+        \begin{eqnarray*}
+          \Th^M, \ptrans{}{P}^M \vdash min(t) \land min(t_p[t/y]) => \phi
+        \end{eqnarray*}
+        This follows by Lemmas~\ref{lem:guarded-eq} and~\ref{lem:guarded-neq}.
+  \item Case $\Ct = (x:\Ct_1) -> \Ct_2$. In this case we have that:
+        \begin{eqnarray*}
+          \Th, \ptrans{}{P} \vdash \phi
+        \end{eqnarray*}
+        with $\phi = \neg \exists x @.@ \ctrans{\Sigma}{\Gamma,x}{x \in \Ct_1} 
+                                  \land \ctrans{\Sigma}{\Gamma,x}{e\;x \notin \Ct_2}$.
+        We must show:
+        \begin{eqnarray*}
+          \Th^M, \ptrans{}{P}^M \vdash \phi^M
+        \end{eqnarray*}
+        This follows by induction hypothesis for both items.
+\end{itemize}
+
+For the second goal we proceed similarly: the base case follows 
+by Lemmas~\ref{lem:guarded-eq} and~\ref{lem:guarded-unr}.
+\end{proof}
+
+\subsection{Restricted arrow translation completeness}
+
+For reasons related to the existence of finite models (that we will return to in 
+Section~\ref{sect:fin-mods}, our previous translation of contracts is not 
+satisfactory. For this reason we will instead use a {\em restricted arrow} translation 
+for arrow contracts, given below:
+
+\[\begin{array}{lcl}
+\ctrans{\Sigma}{\Gamma}{e \in (x{:}\Ct_1) -> \Ct_2}^M
+  & = & \forall x @.@ {\bf min(\etrans{}{}{e\;x})} => \\ 
+  &   & \qquad \ctrans{\Sigma}{\Gamma,x}{x \notin \Ct_1}^M \lor 
+                                \ctrans{\Sigma}{\Gamma,x}{e\;x \in \Ct_2}^M
+\end{array}\]
+
+This is still sound (very easy to carry over the soundness proof), but we will now
+investigate its completeness. Completeness (if true!) might come out as a bit of surprise since, 
+when doing a proof, the unrestricted version 
+arising from $\ctrans{}{}{e \in \Ct_1 -> \Ct_2}^M$ can fire at any time, whereas 
+the restricted version with the modified arrow case can fire {\em only} if we can 
+prove that $min(\etrans{}{}{e\;e'})$ for some argument $e'$.
+
+Lets call the variants of the $(\cdot)^M$ translations, which use the modified arrow
+contract translation $(\cdot)^{M}_{\flat}$. What we would like to show is the following:
+
+\[\begin{array}{c}
+   \Th^M, \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e \notin \Ct}^M \\ 
+   \text{ implies }  \\ 
+   \Th^M, \ptrans{}{P}^M \vdash \neg \ctrans{}{}{e \notin \Ct}^M_{\flat}
+\end{array}\]
+
+An alternative way to put is that if there exists a model 
+\[ {\cal M} \models \Th^M \land \ptrans{}{P}^M \land \ctrans{}{}{e \notin \Ct}^M_{\flat} \]
+then there exists some model ${\cal M}_{\sharp}$ such that:
+\[ {\cal M}_{\sharp} \models \Th^M \land \ptrans{}{P}^M \land \ctrans{}{}{e \notin \Ct}^M \]
+
+\begin{definition}[Construction of ${\cal M}_{\sharp}$]
+Consider a model 
+\[ {\cal M} \models \Th^M \land \ptrans{}{P}^M \land \ctrans{}{}{e \notin \Ct}^M_{\flat} \]
+Consider the following construction: (i) take all elements $d \in dom(M)$ such that 
+$d \notin min(M)$ and equate them to ${\cal I}(\unr)$. This is the domain of the new model ${\cal M}_{\sharp}$.
+The $min$-table of the new model is the same as the old, union with $\{ {\cal I}(\unr)$.
+Call this new structure ${\cal M}_{\sharp}$.
+\end{definition}
+
+\begin{theorem}\label{thm:model-sharp-one}
+If ${\cal M} \models \Th^M \land \ptrans{}{P}^M$ then ${\cal M}_{\sharp} \models \Th^M \land \ptrans{}{P}^M$.
+\end{theorem}
+\begin{proof} \dv{This should be a quite involved proof, since I am bottoming-out several definitions and 
+adding them to min. But I think it should work...}
+\end{proof}
+
+\newcommand{\Mod}{{\cal M}}
+\newcommand{\ModSharp}{{\cal M}_{\sharp}}
+
+\begin{theorem}\label{thm:model-sharp-two}
+Assume that base contracts are {\bf \em strict in their predicates}.
+Assume ${\cal M} \models \Th^M \land \ptrans{}{P}^M$. Then:
+\begin{itemize}
+  \item If ${\cal M} \models \ctrans{}{}{e \notin \Ct}^M_{\flat}$ then ${\cal M}_{\sharp} \models \ctrans{}{}{e \notin \Ct}^M$.
+  \item If ${\cal M} \models \ctrans{}{}{e \in \Ct}^M_{\flat}$ then ${\cal M}_{\sharp} \models \ctrans{}{}{e \in \Ct}^M$.
+\end{itemize}
+\end{theorem}
+\begin{proof}
+We prove the two parts by induction on the structure of the contract $\Ct$. For the first part we have:
+\begin{itemize}
+ \item $\Ct = \{ y \mid p \}$. We have that $\Mod \models min(e) \land min(p(e)) \land e \neq \unr \land p(e) \neq \{ \unr,\True \}$.
+       But that means that $e$ and $p(e)$ were already in the $min$ table so they will not be equated to $\unr$ in $\ModSharp$ (nor will
+       do so any values that they reduce to), hence we get: 
+         \[ \ModSharp \models min(e) \land min(p(e)) \land y \neq \unr \land p(e) \neq \{ \unr,\True \} \]
+
+ \item $\Ct = (x:\Ct_1) -> \Ct_2$. Notice for convenience we use a more decomposed form of the contract.
+       In this case we have that $\Mod \models \exists x @.@ \ctrans{}{}{x \in \Ct_1}^M_{\flat} \land \ctrans{}{}{e\;x \notin \Ct_2}^M_{\flat}$ 
+       and the result simply follows by induction hypothesis for both parts.
+\end{itemize}
+For the second part we have again two cases: 
+\begin{itemize}
+ \item $\Ct = \{ y \mid p \}$. We have that $\Mod \models min(e) \land min(p(e)) \land (e = \unr \lor p(e) = \{ \unr,\True \})$.
+       Since $e$ and $p(e)$ were already in the min-table to start with the result follows.
+
+ \item $\Ct = (\ol{x{:}\Ct}) -> \{ y \mid p\}$. Notice for convenience we use a more decomposed form of the contract.
+       In this case we have that
+       \[\begin{array}{l}
+           \Mod \models \forall \xs @.@ (\neg(min(e\;\xs))) \lor \ctrans{}{}{\ol{x \notin \Ct}}^M_{\flat} \lor \phi \\ \\ 
+           \phi = min(e\;\xs) \land min(p(e\;\xs)) \land \\ 
+           \qquad\quad (e\;\xs = \unr \lor p(e\;\xs) = \{ \unr,\True \}) 
+       \end{array}\]
+       We need to show that:
+       \begin{eqnarray*} 
+           \ModSharp \models \forall \xs @.@ \ctrans{}{}{\ol{x \notin \Ct}}^M \lor \phi \\
+       \end{eqnarray*}
+       Let us pick some $\xs$. Assume $min(e\;\xs)$ in $\Mod$, then the result follows by induction hypothesis. However,
+       if $min(e\;\xs) \notin \Mod$ then we know that $e\;\xs = \unr$ in $\ModSharp$ and moreover $min(\unr)$. Now, if
+       in $\Mod$ we had $min(p(e\;\xs))$ then we must also have had $min(e\;\xs)$ since $p(\cdot)$ is strict. On the
+       other hand if we $p(e\;\xs) \notin min(\Mod)$ then definitely $p(e\;\xs) = \bot$ and we have $min(\unr)$ in $\ModSharp$.
+\end{itemize}
+\end{proof}
+
+
+
+\section{Finite models}\label{sect:fin-mods}
+
+We've seen that the $min$-enabled theory is sound and complete but does 
+it enjoy finite models? Let us condider first simple base contracts. Assume
+that we know that
+\begin{equation}
+  \dbrace{e} \notin \dbrace{\{y \mid p\}} \label{fm:eq1} 
+\end{equation}
+Then this statement gives us evidence for two concrete and finite execution {\em traces}:
+\begin{equation}
+   e \Downarrow v  \quad\quad p[e/y] \Downarrow False \label{fm:eq2} 
+\end{equation}
+Given these two traces we will show next that the FOL formula 
+\[ \Th^M \land \ptrans{}{P} \land \ctrans{}{}{e \notin \{ y \mid p \}} \] 
+does have a {\em finite model}. By doing this we get a formal guarantee that 
+if \ref{fm:eq1} holds then {\em there is} a finite model, so a finite model finder 
+that systematically explores finite models will find one.
+
+Here is the construction. 
+
+\begin{definition}[Construction finite models from traces]
+We start with a set of traces $S \supseteq \{ p[e/y] \Downarrow False, e \Downarrow v \}$.
+By trace I mean the conclusion of every subderivation in the derivation tree 
+for $\Downarrow$, not just the final conclusion.
+
+We consider the term model of all terms and subterms that appear in $S$. We consider equality
+to be the equality induced by derivations $e \Downarrow v$ (that is we set $e = v$) and close 
+by reflexivity, transitivity and congruence. We create a table for $min$ in the following way:
+for each equivalence class created, we add it to $min$ iff there exists a term $e_{L}$ in 
+that class that has appeared in the left-hand side of a derivation $e_{L} \Downarrow \_$ 
+in the set of traces. Let us call this model ${\cal M}_S$. 
+\end{definition}
+
+\begin{lemma} If $S \supseteq \{ p[e/y] \Downarrow False, e \Downarrow v \}$ is a finite
+collection of traces, then: 
+\[   {\cal M}_S \models \Th^M \land \ptrans{}{P} \land \ctrans{}{}{e \notin \{ y \mid p \}} \] 
+\end{lemma}
+\begin{proof} \dv{TODO! But I think it should be doable ... } \end{proof}
+
+
+\subsection{First-order arrow contracts}
+
+The story is not finished yet, what about arrow contracts $(x:\Ct_1) -> \Ct_2$. The problem
+here that if we know that $e$ does not belong in $\dbrace{(x:\Ct_1) -> \Ct_2}$ then this mean
+that there exists some denotation $d$ such that the application of $\dbrace{e}$ to $d$ does
+not belong to $\Ct_2$ {\em and moreover} $d$ belongs in $\dbrace{\Ct_1}$. 
+
+Assuming that $\Ct_1$ and $\Ct_2$ are both base contracts and that $d$ is the image of some 
+actual term $e_d$ then we do get some finite traces from the fact that the application does 
+not belong in $\Ct_2$ but the fact is that our model has to also be a model of:
+\[       \ctrans{}{}{e_d \in \Ct_1} \]
+
+This is problematic, because we have no ``finite witness'' that $e_d$ is in $\dbrace{\Ct_1}$, 
+contrary to the negative case. In fact $e_d$ could diverge, or, even worse, the predicate 
+associated with $\Ct_1$ could diverge yielding an infinite trace. 
+
+From an infinite trace it can often be the case that a finite model can be constructed, if
+the trace involves a finite number of new values. But in principle an infinite trace can
+be causing the evaluation of even more and new terms, which excludes finite models. Here is 
+an example:
+
+\begin{code}
+data Nat = S Nat | Z
+
+pinf Z (S x) = pinf (S Z) (S (S x))
+pinf (S g) (S x) = pinf (S (S g)) (S (S x))
+pinf g Z     = False
+
+isZero Z = True
+isZero _ = False
+
+f :: Nat -> Nat
+f x = x
+
+pinfBroken = f ::: Pred (pinf Z) --> Pred isZero
+\end{code}
+
+Notice in this case that there is a finitely representable
+counterexample @s = S s@ -- however the predicate 
+@pinf Z s@ loops in a fashion that evaluates ever growing terms! Indeed
+the $min$-enabled translation {\em also} results in the model finder 
+looping for this broken contract.
+
+We acknowledge the existence of such problematic counterexamples but
+we can at least characterize (conservatively, not tightly) some
+situations where we definitely can guarantee a finite model (we use $\Bc$ below
+for base contracts).
+
+\begin{lemma}
+If $\dbrace{\ol{e}} \in \dbrace{\ol{\Bc}}$ finitistically, that is, excluding the possibility
+for the predicate and $e$ to be $\bot$ \dv{(... alternatively, via having traces that, if 
+infinite they only mention finite terms is a more relaxed condition)} but 
+$\dbrace{e\;\ol{e}} \notin \dbrace{\Bc_r}$ then there exists
+a finite model of 
+\[ \Th^M \land \ptrans{}{P}^M \land \ctrans{}{}{e \notin (\ol{x}:\ol{\Bc}) -> \Bc_r}^M \]
+\end{lemma}
+\begin{proof} Should be similar to the previous theorem.\end{proof}
+
+
+\paragraph{A condition on contracts that guarantees finitistic satisfaction}
+Assume that every contract of the form $\{x \mid p\} -> \{ y \mid q \}$ that we try to 
+prove about $f$ satisfies the following condition: if $d = \bot$ or $\dbrace{p}(d) = \bot$ then 
+$\dbrace{f}(d) = \bot$ or $\dbrace{q}(\dbrace{f}(d)) = \bot$. If this is the case, then 
+{\em any} counterexample to $f$ satisfying its contract {\em excludes} the possibility of 
+infinite traces, by construction, since an infinite trace for an argument satisfying its 
+contract would result in an infinite trace in the result predicate or function, casting this
+particular argument {\em not} a counterexample! In simpler words, if we can make sure that 
+the precondition of a function is no stricter than the function itself (or its return 
+predicate) then we recover finite models.
+
+\subsection{Higher-order arrow contracts}
+
+The story of first-order arrow contracts is quite reasonable: as our
+example shows it is quite pathological to have a counterexample that
+is justified by an infinite trace in the precondition, and such that
+that infinite trace has to evaluate infinitely many new terms.
+
+For higher-order contracts \dv{As is the case when we try to prove things
+by induction, or when we have already proven a contract about a function and
+attempt to prove more contracts using it.} we still have completeness (by our
+previous theorems) but we have lost the finite models property -- this time due
+to the {\em quantifier} of an arrow contract for an argument.
+
+Consider a counterexample for:
+  \[ \ctrans{}{}{f \in (\Ct_1 -> \Ct_2) -> \Bc} \] 
+It will consist of a program (a denotation actually, but for the sake of the discussion 
+let's just say program) $e$ such that $\ctrans{}{}{e \in \Ct_1 -> \Ct_2}$ but such that 
+$f(e)$ does not satisfy the $\Bc$ contract. This in turn means that {\em for all possible 
+arguments} to $e$, $e'$, either they do not satisfy $\Ct_1$ or the application satisfies 
+$\Ct_2$. As there can be infinitely many arguments to $e$ that need to be tested, this does
+not seem to be a property that we should hope it have some finite justification.
+
+Consider the concrete positive 
+translation when $\Ct_1 -> \Ct_2$ is $\{ x \mid p\} -> \{y \mid q\}$ and let us call $g$ the
+counterexample: 
+\begin{eqnarray*}
+  \forall x. (min(x) \land min(p(x) \land x \neq \unr \land p(x) = \False) \lor \\
+  \quad  min(g(x)) \land min(q(g(x))) \land q(g(x)) = \True 
+\end{eqnarray*}
+Notice that I have not added cases for $q(g(x)) = \unr$ and $g(x) = \unr$, following the 
+``finitistic'' satisfaction definition above.
+
+Imagine though that $p(x) = \True$ uniformly -- this implies in effect that: 
+\begin{eqnarray*}
+    \forall x. min(g(x)) \land min(q(g(x))) \land q(g(x)) = \True
+\end{eqnarray*}
+
+If $g$ is the identity function, in effect we have asserted that for 
+$\forall x. min(x)$ -- losing finite models.
+
+It appears that the quantifier $\forall x @.@ \ldots$ introduced by the positive translation
+is over too many terms, {\em even if} we restrict the base contract satisfaction to have this
+finitistic flavor we have described previously.
+
+So, what is a good candidate for modifying the positive arrow translation which can recover
+finite models? One good candidate is: 
+
+\section{FM for the restricted arrow translation?}
+Can we get some finitistic notion of satisfaction in this restricted
+arrow world that can give us a guarantee for finite models?
+
+\end{document}
+
+
