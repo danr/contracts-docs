@@ -1095,7 +1095,7 @@ Investigating the practical ramifications of this choice is to be
 explored -- however we observe  that under this translation 
 we {\em are also guaranteed to get completeness:}
 
-\begin{theorem}[Completeness]
+\begin{conjecture}[Completeness]
 If we use the selector-based theories (described above) then the following are true:
 \begin{itemize}
   \item If $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \notin \Ct}$ then 
@@ -1103,9 +1103,10 @@ If we use the selector-based theories (described above) then the following are t
   \item If $\Th,\ptrans{}{P} |- \neg \ctrans{}{}{e \in \Ct}$ then 
            $\Th^M,\ptrans{}{P}^M |- \neg \ctrans{}{}{e \in \Ct}^M$.
 \end{itemize}
-\end{theorem}
+\end{conjecture}
 \begin{proof}
-\dv{Sketch still -- but pretty sure it works now!} By induction on 
+\dv{Sketch still -- Sadly, I am not convinced it actually works once all the details
+are there. } By induction on 
 the contract $\Ct$ one can observe that we only get formulas of a
 mixed-prefix quantification $\forall\exists\ldots\forall\exists @.@
 \phi$ where $\phi$ consists of conjunctions and disjunctions of
@@ -1121,9 +1122,9 @@ disjunctions of finite evaluation traces, which in turn allows us to
 use the guarded evaluation lemmas in the $min$-theories and finish the proof.
 \end{proof}
 
-
-This all is very good news because it asserts that we have 
-not lost any proving power by moving to the $min$ world.
+\dv{It would have been very good news if this theorem were true because it
+asserts that we have not lost any proving power by moving to the $min$ world. But 
+I am not really convinced...}
 
 \dv{But we must explore the practicality of this approach. I think 
 it puts more stress in having to have a special $cf(\cdot)$ 
